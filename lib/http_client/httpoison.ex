@@ -1,9 +1,12 @@
-defmodule CFSync.SyncAPI do
+defmodule CFSync.HTTPClient.HTTPoison do
+  @behaviour CFSync.HTTPClient
+
+  @httpoison_module Application.compile_env(:cf_sync, :httpoison_module, HTTPoison)
+
   require Logger
 
-  def request(url, token, options) do
-    request_function = Keyword.get(options, :request_function, &Httpoison.request/1)
-
+  @impl true
+  def fetch(url, token) do
     req = %HTTPoison.Request{
       method: :get,
       headers: [
@@ -14,7 +17,7 @@ defmodule CFSync.SyncAPI do
       url: url
     }
 
-    case request_function.(req) do
+    case @httpoison_module.request(req) do
       {:ok, resp} -> extract_response(resp)
       error -> error
     end

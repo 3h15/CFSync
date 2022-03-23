@@ -1,14 +1,20 @@
-defmodule CFSync.SyncAPITest do
+defmodule CFSync.HTTPClient.HTTPoisonTest do
   use ExUnit.Case
-  doctest CFSync.SyncAPI
+  doctest CFSync.HTTPClient.HTTPoison
 
   import ExUnit.CaptureLog
+  import Mox
+
+  alias CFSync.FakeHTTPoison
+  alias CFSync.HTTPClient
+
+  setup :verify_on_exit!
 
   test "It calls request function with correct data" do
     url = Faker.Internet.url()
     token = Faker.String.base64(12)
 
-    request_function = fn req ->
+    expect(FakeHTTPoison, :request, 1, fn req ->
       assert %{
                method: :get,
                headers: [
@@ -18,9 +24,11 @@ defmodule CFSync.SyncAPITest do
                options: [ssl: [{:versions, [:"tlsv1.2"]}]],
                url: ^url
              } = req
-    end
 
-    CFSync.SyncAPI.request(url, token, request_function: request_function)
+      {:ok, %{status_code: 200, body: "[]"}}
+    end)
+
+    HTTPClient.HTTPoison.fetch(url, token)
   end
 
   test "It handles known errors codes" do
@@ -30,15 +38,15 @@ defmodule CFSync.SyncAPITest do
     ]
 
     for {code, atom, msg} <- known_codes do
-      request_function = fn _req ->
+      expect(FakeHTTPoison, :request, 1, fn _req ->
         {:ok, %{status_code: code}}
-      end
+      end)
 
       {result, log} =
         with_log(
           [level: :error],
           fn ->
-            CFSync.SyncAPI.request("url", "token", request_function: request_function)
+            HTTPClient.HTTPoison.fetch("url", "token")
           end
         )
 
@@ -50,19 +58,19 @@ defmodule CFSync.SyncAPITest do
   test "It handles rate limiting" do
     delay = Faker.random_between(1, 100)
 
-    request_function = fn _req ->
+    expect(FakeHTTPoison, :request, 1, fn _req ->
       {:ok,
        %{
          status_code: 429,
          headers: [{"X-Contentful-RateLimit-Reset", Integer.to_string(delay)}]
        }}
-    end
+    end)
 
     {result, log} =
       with_log(
         [level: :error],
         fn ->
-          CFSync.SyncAPI.request("url", "token", request_function: request_function)
+          HTTPClient.HTTPoison.fetch("url", "token")
         end
       )
 
@@ -73,15 +81,14 @@ defmodule CFSync.SyncAPITest do
   test "It handles response and decodes JSON" do
     data = %{"content" => Faker.Lorem.paragraph()}
 
-    request_function = fn _req ->
+    expect(FakeHTTPoison, :request, 1, fn _req ->
       {:ok,
        %{
          status_code: 200,
          body: Jason.encode!(data)
        }}
-    end
+    end)
 
-    assert {:ok, ^data} =
-             CFSync.SyncAPI.request("url", "token", request_function: request_function)
+    assert {:ok, ^data} = HTTPClient.HTTPoison.fetch("url", "token")
   end
 end
