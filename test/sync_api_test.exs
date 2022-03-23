@@ -46,4 +46,42 @@ defmodule CFSync.SyncAPITest do
       assert log =~ "Contentful request failed: #{msg}"
     end
   end
+
+  test "It handles rate limiting" do
+    delay = Faker.random_between(1, 100)
+
+    request_function = fn _req ->
+      {:ok,
+       %{
+         status_code: 429,
+         headers: [{"X-Contentful-RateLimit-Reset", Integer.to_string(delay)}]
+       }}
+    end
+
+    {result, log} =
+      with_log(
+        [level: :error],
+        fn ->
+          CFSync.SyncAPI.request("url", "token", request_function: request_function)
+        end
+      )
+
+    assert {:rate_limited, ^delay} = result
+    assert log =~ "Contentful request failed: Rate limited"
+  end
+
+  test "It handles response and decodes JSON" do
+    data = %{"content" => Faker.Lorem.paragraph()}
+
+    request_function = fn _req ->
+      {:ok,
+       %{
+         status_code: 200,
+         body: Jason.encode!(data)
+       }}
+    end
+
+    assert {:ok, ^data} =
+             CFSync.SyncAPI.request("url", "token", request_function: request_function)
+  end
 end
