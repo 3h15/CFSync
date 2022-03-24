@@ -24,7 +24,8 @@ defmodule CFSync.MixProject do
     [
       {:httpoison, "~> 1.7"},
       {:jason, "~> 1.2"},
-      {:inflex, "~> 2.1.0"},
+      {:inflex, "~> 2.1"},
+      {:phoenix_html, "~> 3.2"},
       {:faker, "~> 0.17", only: :test},
       {:credo, "~> 1.6", only: [:dev, :test], runtime: false},
       {:mox, "~> 1.0", only: :test}
