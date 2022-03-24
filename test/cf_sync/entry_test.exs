@@ -8,27 +8,27 @@ defmodule CFSync.EntryTest do
   alias CFSyncTest.Fields.SimplePage
 
   import ExUnit.CaptureLog
-  import CFSyncTest.Data
 
   test "new/1 Creates a new entry with correct fields struct" do
-    data = entry_payload()
+    name = Faker.String.base64()
+    data = entry_payload(fields: %{"name" => name})
 
     assert %Entry{
              id: id,
              revision: revision,
              content_type: :page,
-             fields: %Page{name: name}
+             fields: %Page{name: ^name}
            } = Entry.new(data)
 
     assert id == data["sys"]["id"]
     assert revision == data["sys"]["revision"]
-    assert name == data["fields"]["name"]
   end
 
   test "get_name/1 returns name provided by entry's fields module" do
-    data = entry_payload()
+    name = Faker.String.base64()
+    data = entry_payload(fields: %{"name" => name})
     entry = Entry.new(data)
-    assert Entry.get_name(entry) == "Page #{data["fields"]["name"]}"
+    assert Entry.get_name(entry) == "Page #{name}"
   end
 
   test "It parses content-type to snake case atom" do
@@ -91,7 +91,7 @@ defmodule CFSync.EntryTest do
       )
 
     assert %Entry{
-             content_type: content_type_atom,
+             content_type: ^content_type_atom,
              fields: nil
            } = result
 
@@ -117,5 +117,26 @@ defmodule CFSync.EntryTest do
            } = result
 
     assert log =~ "Undefined module: CFSyncTest.Fields.UndefinedModule"
+  end
+
+  defp entry_payload(opts) do
+    id = Keyword.get(opts, :id, Faker.String.base64(10))
+    revision = Keyword.get(opts, :revision, Faker.random_between(1, 1000))
+    content_type = Keyword.get(opts, :content_type, "page")
+    fields = Keyword.get(opts, :fields, %{})
+
+    %{
+      "sys" => %{
+        "id" => id,
+        "type" => "Entry",
+        "revision" => revision,
+        "contentType" => %{
+          "sys" => %{
+            "id" => content_type
+          }
+        }
+      },
+      "fields" => fields
+    }
   end
 end

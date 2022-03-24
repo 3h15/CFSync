@@ -9,7 +9,8 @@ defmodule CFSyncTest.Fields.Page do
   @type t() :: %__MODULE__{name: String.t()}
 
   @impl true
-  def new(%{"name" => name}) do
+  def new(fields_payload) do
+    name = Map.get(fields_payload, "name", "Some name")
     %__MODULE__{name: name}
   end
 
