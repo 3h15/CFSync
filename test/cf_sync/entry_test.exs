@@ -9,7 +9,7 @@ defmodule CFSync.EntryTest do
 
   import ExUnit.CaptureLog
 
-  test "new/1 Creates a new entry with correct fields struct" do
+  test "new/2 Creates a new entry with correct fields struct" do
     lang = Faker.String.base64(2)
     name = Faker.String.base64()
     data = entry_payload(fields: %{"name" => name})

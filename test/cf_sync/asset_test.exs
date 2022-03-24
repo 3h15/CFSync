@@ -5,7 +5,7 @@ defmodule CFSync.AssetTest do
 
   alias CFSync.Asset
 
-  test "new/1 Creates a new asset and correctly maps all values" do
+  test "new/2 Creates a new asset and correctly maps all values" do
     lang = Faker.String.base64(2)
     id = Faker.String.base64()
     title = Faker.String.base64()
