@@ -1,4 +1,4 @@
-defmodule CFSyncTest.Entries do
+defmodule CFSyncTest.Data do
   def entry_payload(opts \\ []) do
     id = Keyword.get(opts, :id, Faker.String.base64(10))
     revision = Keyword.get(opts, :revision, Faker.random_between(1, 1000))

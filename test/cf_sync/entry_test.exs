@@ -8,7 +8,7 @@ defmodule CFSync.EntryTest do
   alias CFSyncTest.Fields.SimplePage
 
   import ExUnit.CaptureLog
-  import CFSyncTest.Entries
+  import CFSyncTest.Data
 
   test "new/1 Creates a new entry with correct fields struct" do
     data = entry_payload()
