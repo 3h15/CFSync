@@ -19,23 +19,26 @@ defmodule CFSync.Entry do
           fields: Fields.t()
         }
 
-  @spec new(map) :: t()
-  def new(%{
-        "sys" => %{
-          "id" => id,
-          "type" => "Entry",
-          "revision" => revision,
-          "contentType" => %{
-            "sys" => %{
-              "id" => content_type
+  @spec new(map, binary) :: t()
+  def new(
+        %{
+          "sys" => %{
+            "id" => id,
+            "type" => "Entry",
+            "revision" => revision,
+            "contentType" => %{
+              "sys" => %{
+                "id" => content_type
+              }
             }
-          }
+          },
+          "fields" => fields
         },
-        "fields" => fields
-      }) do
+        lang
+      ) do
     content_type = parse_content_type(content_type)
 
-    fields = new_fields(content_type, fields)
+    fields = new_fields(content_type, fields, lang)
 
     %__MODULE__{
       id: id,
@@ -49,12 +52,12 @@ defmodule CFSync.Entry do
     Fields.get_name(this.fields)
   end
 
-  defp new_fields(:unknown, _fields_data), do: nil
+  defp new_fields(:unknown, _fields_data, _lang), do: nil
 
-  defp new_fields(content_type, fields_data) when is_atom(content_type) do
+  defp new_fields(content_type, fields_data, lang) when is_atom(content_type) do
     with {:ok, mod} <- fetch_fields_module(content_type),
          {:module, ^mod} <- load_fields_module(mod) do
-      mod.new(fields_data)
+      mod.new(fields_data, lang)
     else
       {:error, :no_config_for_content_type} ->
         Logger.error("No configured fields module for content_type: #{inspect(content_type)}")

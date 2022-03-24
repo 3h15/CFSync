@@ -1,5 +1,5 @@
 defmodule CFSync.Entry.FieldsConstructor do
   @moduledoc false
 
-  @callback new(map()) :: CFSync.Entry.Fields.t()
+  @callback new(map, binary) :: CFSync.Entry.Fields.t()
 end
