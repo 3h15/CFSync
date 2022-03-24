@@ -1,5 +1,6 @@
 defmodule CFSync.HTTPClient.HTTPoisonTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
+
   doctest CFSync.HTTPClient.HTTPoison
 
   import ExUnit.CaptureLog
