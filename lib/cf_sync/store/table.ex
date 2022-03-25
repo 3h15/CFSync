@@ -12,7 +12,13 @@ defmodule CFSync.Store.Table do
       read_concurrency: true
     ])
 
-    :ets.whereis(name)
+    case :ets.whereis(name) do
+      :undefined ->
+        raise "Unable to create ETS table"
+
+      ref ->
+        ref
+    end
   end
 
   @spec put(:ets.tid(), CFSync.Asset.t() | CFSync.Entry.t()) :: true
@@ -41,6 +47,16 @@ defmodule CFSync.Store.Table do
     for {_key, _content_type, entry} <- records do
       entry
     end
+  end
+
+  @spec delete_entry(:ets.tid(), binary()) :: true
+  def delete_entry(ref, entry_id) do
+    :ets.delete(ref, {:entry, entry_id})
+  end
+
+  @spec delete_asset(:ets.tid(), binary()) :: true
+  def delete_asset(ref, asset_id) do
+    :ets.delete(ref, {:asset, asset_id})
   end
 
   defp put(ref, type, id, content_type, record) do

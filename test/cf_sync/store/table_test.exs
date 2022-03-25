@@ -55,6 +55,21 @@ defmodule CFSync.Store.TableTest do
     assert Table.get_entry(reference, id) == entry
   end
 
+  test "delete_entry/2 deletes entry from table" do
+    name = Faker.Util.format("%A%4a%A%3a") |> String.to_atom()
+    reference = Table.new(name)
+
+    entry_1 = %{id: id_1} = create_page_entry()
+    entry_2 = %{id: id_2} = create_page_entry()
+
+    Table.put(reference, entry_1)
+    Table.put(reference, entry_2)
+    Table.delete_entry(reference, id_1)
+
+    assert Table.get_entry(reference, id_2) == entry_2
+    assert Table.get_entry(reference, id_1) == nil
+  end
+
   test "get_entries_for_content_type/2 get filtered entries from table" do
     name = Faker.Util.format("%A%4a%A%3a") |> String.to_atom()
     reference = Table.new(name)
@@ -85,6 +100,21 @@ defmodule CFSync.Store.TableTest do
     Table.put(reference, asset)
 
     assert Table.get_asset(reference, id) == asset
+  end
+
+  test "delete_asset/2 deletes asset from table" do
+    name = Faker.Util.format("%A%4a%A%3a") |> String.to_atom()
+    reference = Table.new(name)
+
+    asset_1 = %{id: id_1} = create_asset()
+    asset_2 = %{id: id_2} = create_asset()
+
+    Table.put(reference, asset_1)
+    Table.put(reference, asset_2)
+    Table.delete_asset(reference, id_1)
+
+    assert Table.get_asset(reference, id_2) == asset_2
+    assert Table.get_asset(reference, id_1) == nil
   end
 
   defp create_page_entry() do
