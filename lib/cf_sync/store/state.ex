@@ -2,8 +2,12 @@ defmodule CFSync.Store.State do
   @default_initial_sync_interval 30
   @default_delta_sync_interval 5000
 
+  alias CFSync.Space
+
   defstruct([
     :name,
+    :space,
+    :locale,
     :table_reference,
     :initial_sync_interval,
     :delta_sync_interval,
@@ -14,6 +18,8 @@ defmodule CFSync.Store.State do
 
   @type t() :: %__MODULE__{
           name: atom(),
+          space: Space.t(),
+          locale: binary(),
           table_reference: :ets.tid(),
           initial_sync_interval: integer(),
           delta_sync_interval: integer(),
@@ -22,9 +28,9 @@ defmodule CFSync.Store.State do
           auto_tick: boolean()
         }
 
-  @spec new(atom, :ets.tid(), keyword) :: CFSync.Store.State.t()
-  def new(name, table_reference, opts \\ [])
-      when is_atom(name) and is_list(opts) do
+  @spec new(atom, Space.t(), binary, :ets.tid(), keyword) :: CFSync.Store.State.t()
+  def new(name, %Space{} = space, locale, table_reference, opts \\ [])
+      when is_atom(name) and is_binary(locale) and is_list(opts) do
     initial_sync_interval =
       Keyword.get(opts, :initial_sync_interval, @default_initial_sync_interval)
 
@@ -34,6 +40,8 @@ defmodule CFSync.Store.State do
 
     %__MODULE__{
       name: name,
+      space: space,
+      locale: locale,
       table_reference: table_reference,
       initial_sync_interval: initial_sync_interval,
       delta_sync_interval: delta_sync_interval,
