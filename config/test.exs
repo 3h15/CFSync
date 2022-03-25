@@ -9,3 +9,5 @@ config :cf_sync, :fields_modules, %{
   simple_page: CFSyncTest.Fields.SimplePage,
   content_type_with_undefined_module: CFSyncTest.Fields.UndefinedModule
 }
+
+config :cf_sync, :sync_connector_module, CFSync.FakeSyncConnector
