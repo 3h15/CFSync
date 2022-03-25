@@ -35,22 +35,42 @@ defmodule CFSync.Store.StateTest do
            } = s
   end
 
-  test "update/2 changes next_url" do
+  test "update/3 changes next_url and next_url_type" do
     name = Faker.Util.format("%A%4a%A%3a") |> String.to_atom()
     reference = make_ref()
     s = State.new(name, reference)
 
     assert s.next_url == nil
+    assert s.next_url_type == :next_page
 
     url = Faker.Internet.url()
-    s = State.update(s, url)
+    s = State.update(s, url, :next_sync)
 
     assert %State{
              name: ^name,
              table_reference: ^reference,
              initial_sync_interval: 30,
              delta_sync_interval: 5000,
-             next_url: ^url
+             next_url: ^url,
+             next_url_type: :next_sync
            } = s
+  end
+
+  test "By default, auto_tick is true" do
+    name = Faker.Util.format("%A%4a%A%3a") |> String.to_atom()
+    reference = make_ref()
+
+    s = State.new(name, reference)
+
+    assert s.auto_tick == true
+  end
+
+  test "auto_tick can be set to false" do
+    name = Faker.Util.format("%A%4a%A%3a") |> String.to_atom()
+    reference = make_ref()
+
+    s = State.new(name, reference, auto_tick: false)
+
+    assert s.auto_tick == false
   end
 end
