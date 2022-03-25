@@ -17,7 +17,7 @@ defmodule CFSync.SyncConnector do
   def sync(space, url \\ nil)
   def sync(%Space{} = space, nil), do: sync(space, initial_url(space))
 
-  def sync(%Space{} = space, url), do: @http_client_module.fetch(space, url)
+  def sync(%Space{} = space, url), do: @http_client_module.fetch(url, space.token)
 
   defp initial_url(%Space{root_url: u, space_id: s}), do: "#{u}spaces/#{s}/sync/?initial=true"
 end

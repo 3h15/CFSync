@@ -18,8 +18,8 @@ defmodule CFSync.SyncConnectorTest do
 
     space = Space.new(root_url, space_id, token)
 
-    expect(FakeHTTPClient, :fetch, 1, fn space, url ->
-      assert %{root_url: ^root_url, space_id: ^space_id, token: ^token} = space
+    expect(FakeHTTPClient, :fetch, 1, fn url, token ->
+      assert token == space.token
       expected_url = root_url <> "spaces/" <> space_id <> "/sync/?initial=true"
       assert expected_url == url
     end)
@@ -36,8 +36,8 @@ defmodule CFSync.SyncConnectorTest do
 
     space = Space.new(root_url, space_id, token)
 
-    expect(FakeHTTPClient, :fetch, 1, fn space, url ->
-      assert %{root_url: ^root_url, space_id: ^space_id, token: ^token} = space
+    expect(FakeHTTPClient, :fetch, 1, fn url, token ->
+      assert token == space.token
       assert ^provided_url = url
     end)
 
