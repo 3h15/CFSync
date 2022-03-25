@@ -6,6 +6,8 @@ defmodule CFSync.SyncConnector do
   With URL, it makes subsequent "delta" sync requests
   """
 
+  @behaviour CFSync.SyncConnector.Behaviour
+
   @http_client_module Application.compile_env(
                         :cf_sync,
                         :http_client_module,
@@ -14,6 +16,7 @@ defmodule CFSync.SyncConnector do
 
   alias CFSync.Space
 
+  @impl true
   def sync(space, url \\ nil)
   def sync(%Space{} = space, nil), do: sync(space, initial_url(space))
 
