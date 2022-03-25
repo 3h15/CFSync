@@ -6,14 +6,15 @@ defmodule CFSync.Store.State do
 
   @type t() :: %__MODULE__{
           name: atom(),
-          table_reference: reference(),
+          table_reference: :ets.tid(),
           initial_sync_interval: integer(),
           delta_sync_interval: integer(),
           next_url: nil | binary()
         }
 
+  @spec new(atom, :ets.tid(), keyword) :: CFSync.Store.State.t()
   def new(name, table_reference, opts \\ [])
-      when is_atom(name) and is_reference(table_reference) and is_list(opts) do
+      when is_atom(name) and is_list(opts) do
     initial_sync_interval =
       Keyword.get(opts, :initial_sync_interval, @default_initial_sync_interval)
 
