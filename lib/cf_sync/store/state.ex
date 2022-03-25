@@ -12,7 +12,8 @@ defmodule CFSync.Store.State do
           next_url: nil | binary()
         }
 
-  def new(name, opts \\ []) when is_atom(name) and is_list(opts) do
+  def new(name, table_reference, opts \\ [])
+      when is_atom(name) and is_reference(table_reference) and is_list(opts) do
     initial_sync_interval =
       Keyword.get(opts, :initial_sync_interval, @default_initial_sync_interval)
 
@@ -20,7 +21,7 @@ defmodule CFSync.Store.State do
 
     %__MODULE__{
       name: name,
-      table_reference: create_table(name),
+      table_reference: table_reference,
       initial_sync_interval: initial_sync_interval,
       delta_sync_interval: delta_sync_interval
     }
@@ -31,17 +32,5 @@ defmodule CFSync.Store.State do
       this
       | next_url: url
     }
-  end
-
-  defp create_table(name) do
-    :ets.new(name, [
-      :named_table,
-      :set,
-      :protected,
-      write_concurrency: false,
-      read_concurrency: true
-    ])
-
-    :ets.whereis(name)
   end
 end
