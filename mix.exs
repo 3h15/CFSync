@@ -28,6 +28,7 @@ defmodule CFSync.MixProject do
       {:phoenix_html, "~> 3.2"},
       {:faker, "~> 0.17", only: :test},
       {:credo, "~> 1.6", only: [:dev, :test], runtime: false},
+      {:dialyxir, "~> 1.0", only: [:dev], runtime: false},
       {:mox, "~> 1.0", only: :test}
 
       # {:dep_from_hexpm, "~> 0.3.0"},
