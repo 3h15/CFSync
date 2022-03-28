@@ -10,6 +10,11 @@ defmodule CFSync.StoreTest do
   alias CFSync.Space
   alias CFSync.SyncPayload
 
+  alias CFSync.Asset
+  alias CFSync.Entry
+
+  alias CFSync.Store.Table
+
   alias CFSync.FakeSyncConnector
 
   setup :verify_on_exit!
@@ -172,5 +177,177 @@ defmodule CFSync.StoreTest do
     refute_receive({:EXIT, ^pid, _}, 250)
 
     assert Process.alive?(pid)
+  end
+
+  test "Server adds and remove entries and assets", %{
+    name: name,
+    locale: locale,
+    start_server: start_server
+  } do
+    parent = self()
+
+    item = fn
+      Asset, id, type ->
+        %{
+          "sys" => %{"id" => id, "type" => type},
+          "fields" => %{
+            "title" => %{locale => ""},
+            "description" => %{locale => ""},
+            "file" => %{
+              locale => %{
+                "contentType" => "",
+                "fileName" => "",
+                "url" => "",
+                "details" => %{
+                  "image" => %{
+                    "width" => 0,
+                    "height" => 0
+                  },
+                  "size" => 0
+                }
+              }
+            }
+          }
+        }
+
+      Entry, id, type ->
+        %{
+          "sys" => %{
+            "id" => id,
+            "type" => type,
+            "revision" => 1,
+            "contentType" => %{"sys" => %{"id" => "page"}}
+          },
+          "fields" => %{}
+        }
+    end
+
+    {pid, tick} = start_server.(auto_tick: false)
+    allow(FakeSyncConnector, self(), pid)
+
+    sync_with = fn items ->
+      ref = make_ref()
+
+      expect(FakeSyncConnector, :sync, fn _space, _locale, _url ->
+        send(parent, {ref, :temp})
+        {:ok, SyncPayload.new(%{"nextSyncUrl" => "", "items" => items}, locale)}
+      end)
+
+      tick.()
+      assert_receive {^ref, :temp}
+
+      # Wait for an empty sync cycle to ensure :ets is synced
+      # Without this, the test tries to get records from the table before
+      # they're inserted
+      ref = make_ref()
+
+      expect(FakeSyncConnector, :sync, fn _space, _locale, _url ->
+        send(parent, {ref, :temp})
+        {:ok, SyncPayload.new(%{"nextSyncUrl" => "", "items" => []}, locale)}
+      end)
+
+      tick.()
+      assert_receive {^ref, :temp}
+    end
+
+    # Add some items
+    sync_with.([
+      item.(Entry, "1-upsert-entry", "Entry"),
+      item.(Entry, "2-upsert-entry", "Entry"),
+      item.(Asset, "3-upsert-asset", "Asset"),
+      item.(Asset, "4-upsert-asset", "Asset")
+    ])
+
+    assert [
+             %Entry{id: "1-upsert-entry"},
+             %Entry{id: "2-upsert-entry"}
+           ] = Table.get_entries(name) |> Enum.sort_by(& &1.id)
+
+    assert [
+             %Asset{id: "3-upsert-asset"},
+             %Asset{id: "4-upsert-asset"}
+           ] = Table.get_assets(name) |> Enum.sort_by(& &1.id)
+
+    #  Add some items should concat with previsou
+    sync_with.([
+      item.(Asset, "5-upsert-asset", "Asset"),
+      item.(Asset, "6-upsert-asset", "Asset"),
+      item.(Entry, "7-upsert-entry", "Entry"),
+      item.(Entry, "8-upsert-entry", "Entry")
+    ])
+
+    assert [
+             %Entry{id: "1-upsert-entry"},
+             %Entry{id: "2-upsert-entry"},
+             %Entry{id: "7-upsert-entry"},
+             %Entry{id: "8-upsert-entry"}
+           ] = Table.get_entries(name) |> Enum.sort_by(& &1.id)
+
+    assert [
+             %Asset{id: "3-upsert-asset"},
+             %Asset{id: "4-upsert-asset"},
+             %Asset{id: "5-upsert-asset"},
+             %Asset{id: "6-upsert-asset"}
+           ] = Table.get_assets(name) |> Enum.sort_by(& &1.id)
+
+    #  Delete some items should keep other ones
+    sync_with.([
+      item.(Asset, "4-upsert-asset", "DeletedAsset"),
+      item.(Asset, "5-upsert-asset", "DeletedAsset"),
+      item.(Entry, "1-upsert-entry", "DeletedEntry"),
+      item.(Entry, "8-upsert-entry", "DeletedEntry")
+    ])
+
+    assert [
+             %Entry{id: "2-upsert-entry"},
+             %Entry{id: "7-upsert-entry"}
+           ] = Table.get_entries(name) |> Enum.sort_by(& &1.id)
+
+    assert [
+             %Asset{id: "3-upsert-asset"},
+             %Asset{id: "6-upsert-asset"}
+           ] = Table.get_assets(name) |> Enum.sort_by(& &1.id)
+
+    #  Delete remaining items to ensure we can empty the tables without crashing
+    sync_with.([
+      item.(Asset, "3-upsert-asset", "DeletedAsset"),
+      item.(Asset, "6-upsert-asset", "DeletedAsset"),
+      item.(Entry, "2-upsert-entry", "DeletedEntry"),
+      item.(Entry, "7-upsert-entry", "DeletedEntry")
+    ])
+
+    assert [] = Table.get_entries(name) |> Enum.sort_by(& &1.id)
+
+    assert [] = Table.get_assets(name) |> Enum.sort_by(& &1.id)
+
+    #  Delete inexistent items should not crash
+    sync_with.([
+      item.(Asset, "3-upsert-asset", "DeletedAsset"),
+      item.(Asset, "6-upsert-asset", "DeletedAsset"),
+      item.(Entry, "2-upsert-entry", "DeletedEntry"),
+      item.(Entry, "7-upsert-entry", "DeletedEntry")
+    ])
+
+    assert [] = Table.get_entries(name) |> Enum.sort_by(& &1.id)
+
+    assert [] = Table.get_assets(name) |> Enum.sort_by(& &1.id)
+
+    # The server should still be in a state where is accepts new items
+    sync_with.([
+      item.(Entry, "1-upsert-entry", "Entry"),
+      item.(Entry, "2-upsert-entry", "Entry"),
+      item.(Asset, "3-upsert-asset", "Asset"),
+      item.(Asset, "4-upsert-asset", "Asset")
+    ])
+
+    assert [
+             %Entry{id: "1-upsert-entry"},
+             %Entry{id: "2-upsert-entry"}
+           ] = Table.get_entries(name) |> Enum.sort_by(& &1.id)
+
+    assert [
+             %Asset{id: "3-upsert-asset"},
+             %Asset{id: "4-upsert-asset"}
+           ] = Table.get_assets(name) |> Enum.sort_by(& &1.id)
   end
 end
