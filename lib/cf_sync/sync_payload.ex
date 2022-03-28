@@ -2,7 +2,7 @@ defmodule CFSync.SyncPayload do
   alias CFSync.Entry
   alias CFSync.Asset
 
-  @type delta() :: {:upsert, Entry.t() | Asset.t()} | {:delete, binary()}
+  @type delta() :: {:upsert, Entry.t() | Asset.t()} | {:delete_asset | :delete_entry, binary()}
 
   defstruct next_url: "",
             next_url_type: :next_page,
@@ -44,10 +44,10 @@ defmodule CFSync.SyncPayload do
           {:upsert, Entry.new(item, lang)}
 
         "DeletedAsset" ->
-          {:delete, id}
+          {:delete_asset, id}
 
         "DeletedEntry" ->
-          {:delete, id}
+          {:delete_entry, id}
       end
     end
   end

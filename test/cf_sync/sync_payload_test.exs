@@ -88,10 +88,10 @@ defmodule CFSync.SyncPayloadTest do
 
     assert [
              {:upsert, %Entry{id: "1-upsert-entry"}},
-             {:delete, "2-del-asset"},
+             {:delete_asset, "2-del-asset"},
              {:upsert, %Entry{id: "3-upsert-entry"}},
-             {:delete, "4-del-asset"},
-             {:delete, "5-del-entry"},
+             {:delete_asset, "4-del-asset"},
+             {:delete_entry, "5-del-entry"},
              {:upsert, %Asset{id: "6-upsert-asset"}}
            ] = deltas
   end

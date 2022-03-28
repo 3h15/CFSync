@@ -1,3 +1,6 @@
 defmodule CFSync.SyncConnector.Behaviour do
-  @callback sync(CFSync.Space.t(), nil | String.t()) :: any()
+  alias CFSync.SyncPayload
+
+  @callback sync(CFSync.Space.t(), String.t(), nil | String.t()) ::
+              {:ok, SyncPayload.t()} | {:rate_limited, integer()} | {:error, binary()}
 end
