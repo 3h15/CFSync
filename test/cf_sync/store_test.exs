@@ -8,6 +8,7 @@ defmodule CFSync.StoreTest do
 
   alias CFSync.Store
   alias CFSync.Space
+  alias CFSync.SyncPayload
 
   alias CFSync.FakeSyncConnector
 
@@ -44,9 +45,9 @@ defmodule CFSync.StoreTest do
     parent = self()
     ref = make_ref()
 
-    expect(FakeSyncConnector, :sync, 3, fn _sp, _url ->
+    expect(FakeSyncConnector, :sync, 3, fn _sp, _locale, _url ->
       send(parent, {ref, :temp})
-      {:ok, %{"nextPageUrl" => "http://...", "items" => []}}
+      {:ok, %SyncPayload{next_url: "http://...", next_url_type: :next_page, deltas: []}}
     end)
 
     {pid, _tick} = start_server.([])
@@ -65,12 +66,12 @@ defmodule CFSync.StoreTest do
     step_ref_1 = make_ref()
     next_url_1 = Faker.Internet.url()
 
-    expect(FakeSyncConnector, :sync, fn sp, url ->
+    expect(FakeSyncConnector, :sync, fn sp, _locale, url ->
       assert space == sp
       assert url == nil
 
       send(parent, {step_ref_1, :temp})
-      {:ok, %{"nextPageUrl" => next_url_1, "items" => []}}
+      {:ok, %SyncPayload{next_url: next_url_1, next_url_type: :next_page, deltas: []}}
     end)
 
     allow(FakeSyncConnector, self(), pid)
@@ -81,12 +82,12 @@ defmodule CFSync.StoreTest do
     step_ref_2 = make_ref()
     next_url_2 = Faker.Internet.url()
 
-    expect(FakeSyncConnector, :sync, fn sp, url ->
+    expect(FakeSyncConnector, :sync, fn sp, _locale, url ->
       assert space == sp
       assert url == next_url_1
 
       send(parent, {step_ref_2, :temp})
-      {:ok, %{"nextSyncUrl" => next_url_2, "items" => []}}
+      {:ok, %SyncPayload{next_url: next_url_2, next_url_type: :next_page, deltas: []}}
     end)
 
     tick.()
@@ -95,12 +96,12 @@ defmodule CFSync.StoreTest do
     step_ref_3 = make_ref()
     next_url_3 = Faker.Internet.url()
 
-    expect(FakeSyncConnector, :sync, fn sp, url ->
+    expect(FakeSyncConnector, :sync, fn sp, _locale, url ->
       assert space == sp
       assert url == next_url_2
 
       send(parent, {step_ref_3, :temp})
-      {:ok, %{"nextSyncUrl" => next_url_3, "items" => []}}
+      {:ok, %SyncPayload{next_url: next_url_3, next_url_type: :sync_page, deltas: []}}
     end)
 
     tick.()
@@ -117,7 +118,7 @@ defmodule CFSync.StoreTest do
 
     step_ref_1 = make_ref()
 
-    expect(FakeSyncConnector, :sync, fn _space, _url ->
+    expect(FakeSyncConnector, :sync, fn _space, _locale, _url ->
       send(parent, {step_ref_1, :temp})
       {:error, :any_message}
     end)
@@ -148,7 +149,7 @@ defmodule CFSync.StoreTest do
 
     step_ref_1 = make_ref()
 
-    expect(FakeSyncConnector, :sync, fn _space, _url ->
+    expect(FakeSyncConnector, :sync, fn _space, _locale, _url ->
       send(parent, {step_ref_1, :temp})
       {:rate_limited, Faker.random_between(1, 100)}
     end)

@@ -13,9 +13,7 @@ defmodule CFSync.Store do
   alias CFSync.Store.State
   alias CFSync.Store.Table
 
-  alias CFSync.Entry
-  alias CFSync.Asset
-  # alias CFSync.Link
+  alias CFSync.SyncPayload
 
   @sync_connector_module Application.compile_env(
                            :cf_sync,
@@ -47,8 +45,8 @@ defmodule CFSync.Store do
 
   @impl true
   def handle_info(:sync, state) do
-    case(@sync_connector_module.sync(state.space, state.next_url)) do
-      {:ok, payload} ->
+    case(@sync_connector_module.sync(state.space, state.locale, state.next_url)) do
+      {:ok, %SyncPayload{} = payload} ->
         # We got a response, handle it
         {:noreply,
          state
@@ -70,31 +68,20 @@ defmodule CFSync.Store do
     end
   end
 
-  defp update_url(s, %{"nextPageUrl" => url} = _payload) do
+  defp update_url(s, %SyncPayload{next_url_type: :next_page, next_url: url} = _payload) do
     State.update(s, url, :next_page)
   end
 
-  defp update_url(s, %{"nextSyncUrl" => url} = _payload) do
+  defp update_url(s, %SyncPayload{next_url_type: :next_sync, next_url: url} = _payload) do
     State.update(s, url, :next_sync)
   end
 
-  defp update_table(state, payload) do
-    for item <- payload["items"] do
-      id = item["sys"]["id"]
-      type = item["sys"]["type"]
-
-      case type do
-        "Asset" ->
-          Table.put(state.table_reference, Asset.new(item, "fr"))
-
-        "Entry" ->
-          Table.put(state.table_reference, Entry.new(item, "fr"))
-
-        "DeletedAsset" ->
-          Table.delete_asset(state.table_reference, id)
-
-        "DeletedEntry" ->
-          Table.delete_entry(state.table_reference, id)
+  defp update_table(state, %SyncPayload{deltas: deltas}) do
+    for delta <- deltas do
+      case delta do
+        {:upsert, item} -> Table.put(state.table_reference, item)
+        {:delete_asset, asset_id} -> Table.delete_asset(state.table_reference, asset_id)
+        {:delete_entry, entry_id} -> Table.delete_entry(state.table_reference, entry_id)
       end
     end
 
