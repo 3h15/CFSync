@@ -71,7 +71,7 @@ defmodule CFSync.HTTPClient.HTTPoisonTest do
         end
       )
 
-    assert {:error, unknown} = result
+    assert {:error, :unknown} = result
     assert log =~ "Unhandled Contentful status code: #{code}"
   end
 
@@ -99,8 +99,6 @@ defmodule CFSync.HTTPClient.HTTPoisonTest do
   end
 
   test "It handles rate limiting with defautl delay if none is provided in headers" do
-    delay = Faker.random_between(1, 100)
-
     expect(FakeHTTPoison, :request, 1, fn _req ->
       {:ok,
        %{
