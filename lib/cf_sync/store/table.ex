@@ -13,8 +13,11 @@ defmodule CFSync.Store.Table do
     ])
 
     case :ets.whereis(name) do
+      # coveralls-ignore-start
       :undefined ->
         raise "Unable to create ETS table"
+
+      # coveralls-ignore-stop
 
       ref ->
         ref
