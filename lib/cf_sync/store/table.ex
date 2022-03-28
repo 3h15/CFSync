@@ -6,7 +6,7 @@ defmodule CFSync.Store.Table do
   def new(name) when is_atom(name) do
     :ets.new(name, [
       :named_table,
-      :set,
+      :ordered_set,
       :protected,
       write_concurrency: false,
       read_concurrency: true
@@ -41,6 +41,22 @@ defmodule CFSync.Store.Table do
     case :ets.lookup(ref, {:asset, asset_id}) do
       [{_key, _content_type, asset}] -> asset
       _ -> nil
+    end
+  end
+
+  def get_assets(ref) do
+    records = :ets.match_object(ref, {{:asset, :_}, :_, :_})
+
+    for {_key, _content_type, asset} <- records do
+      asset
+    end
+  end
+
+  def get_entries(ref) do
+    records = :ets.match_object(ref, {{:entry, :_}, :_, :_})
+
+    for {_key, _content_type, entry} <- records do
+      entry
     end
   end
 
