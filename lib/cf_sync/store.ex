@@ -21,6 +21,11 @@ defmodule CFSync.Store do
                            CFSync.SyncConnector
                          )
 
+  # Delay between init/1 call and first sync request. This gives some time the parent
+  # process to continue initializing. For example, tests rely on it to setup mocks
+  # before first request. Do not lower it too much to avoid make tests brittle.
+  @delay_before_start 10
+
   @spec start_link(atom, keyword) :: :ignore | {:error, any} | {:ok, pid}
   def start_link(name, opts \\ []) when is_atom(name) do
     init_args = [{:name, name} | opts]
@@ -38,7 +43,7 @@ defmodule CFSync.Store do
     state =
       name
       |> State.new(space, locale, table_reference, init_args)
-      |> schedule_tick(1)
+      |> schedule_tick(@delay_before_start)
 
     {:ok, state}
   end
@@ -48,6 +53,7 @@ defmodule CFSync.Store do
     case(@sync_connector_module.sync(state.space, state.locale, state.next_url)) do
       {:ok, %SyncPayload{} = payload} ->
         # We got a response, handle it
+
         {:noreply,
          state
          |> update_url(payload)

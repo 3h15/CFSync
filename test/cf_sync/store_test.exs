@@ -43,19 +43,22 @@ defmodule CFSync.StoreTest do
 
   test "With auto_tick on, server syncs regularly", %{start_server: start_server} do
     parent = self()
+
+    {pid, _tick} = start_server.(initial_sync_interval: 10, delta_sync_interval: 10)
+    allow(FakeSyncConnector, self(), pid)
+
+    # Step 1, return :next_page
     step_ref_1 = make_ref()
-    step_ref_2 = make_ref()
-    step_ref_3 = make_ref()
 
     expect(FakeSyncConnector, :sync, 1, fn _sp, _locale, _url ->
       send(parent, {step_ref_1, :temp})
       {:ok, %SyncPayload{next_url: "http://...", next_url_type: :next_page, deltas: []}}
     end)
 
-    {pid, _tick} = start_server.(initial_sync_interval: 10, delta_sync_interval: 10)
-    allow(FakeSyncConnector, self(), pid)
-
     assert_receive {^step_ref_1, :temp}, 15
+
+    # Step 2, return :next_page
+    step_ref_2 = make_ref()
 
     expect(FakeSyncConnector, :sync, 1, fn _sp, _locale, _url ->
       send(parent, {step_ref_2, :temp})
@@ -63,6 +66,9 @@ defmodule CFSync.StoreTest do
     end)
 
     assert_receive {^step_ref_2, :temp}, 15
+
+    # Step 3, return :next_sync
+    step_ref_3 = make_ref()
 
     expect(FakeSyncConnector, :sync, 1, fn _sp, _locale, _url ->
       send(parent, {step_ref_3, :temp})
@@ -75,48 +81,39 @@ defmodule CFSync.StoreTest do
   test "Server sync pages, then deltas", %{space: space, start_server: start_server} do
     parent = self()
 
+    next_sync_with = fn expected_url, ref, next_url, next_url_type ->
+      expect(FakeSyncConnector, :sync, fn sp, _locale, url ->
+        assert sp == space
+        assert url == expected_url
+
+        send(parent, {ref, :temp})
+        {:ok, %SyncPayload{next_url: next_url, next_url_type: next_url_type, deltas: []}}
+      end)
+    end
+
     {pid, tick} = start_server.(auto_tick: false)
+    allow(FakeSyncConnector, self(), pid)
 
     step_ref_1 = make_ref()
-    next_url_1 = Faker.Internet.url()
+    url_1 = Faker.Internet.url()
 
-    expect(FakeSyncConnector, :sync, fn sp, _locale, url ->
-      assert space == sp
-      assert url == nil
-
-      send(parent, {step_ref_1, :temp})
-      {:ok, %SyncPayload{next_url: next_url_1, next_url_type: :next_page, deltas: []}}
-    end)
-
-    allow(FakeSyncConnector, self(), pid)
+    next_sync_with.(nil, step_ref_1, url_1, :next_page)
 
     tick.()
     assert_receive {^step_ref_1, :temp}
 
     step_ref_2 = make_ref()
-    next_url_2 = Faker.Internet.url()
+    url_2 = Faker.Internet.url()
 
-    expect(FakeSyncConnector, :sync, fn sp, _locale, url ->
-      assert space == sp
-      assert url == next_url_1
-
-      send(parent, {step_ref_2, :temp})
-      {:ok, %SyncPayload{next_url: next_url_2, next_url_type: :next_page, deltas: []}}
-    end)
+    next_sync_with.(url_1, step_ref_2, url_2, :next_page)
 
     tick.()
     assert_receive {^step_ref_2, :temp}
 
     step_ref_3 = make_ref()
-    next_url_3 = Faker.Internet.url()
+    url_3 = Faker.Internet.url()
 
-    expect(FakeSyncConnector, :sync, fn sp, _locale, url ->
-      assert space == sp
-      assert url == next_url_2
-
-      send(parent, {step_ref_3, :temp})
-      {:ok, %SyncPayload{next_url: next_url_3, next_url_type: :sync_page, deltas: []}}
-    end)
+    next_sync_with.(url_2, step_ref_3, url_3, :next_sync)
 
     tick.()
     assert_receive {^step_ref_3, :temp}
