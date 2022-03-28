@@ -8,7 +8,14 @@ defmodule CFSync.MixProject do
       elixir: "~> 1.13",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
-      elixirc_paths: elixirc_paths(Mix.env())
+      elixirc_paths: elixirc_paths(Mix.env()),
+      test_coverage: [tool: ExCoveralls],
+      preferred_cli_env: [
+        coveralls: :test,
+        "coveralls.detail": :test,
+        "coveralls.post": :test,
+        "coveralls.html": :test
+      ]
     ]
   end
 
@@ -26,6 +33,7 @@ defmodule CFSync.MixProject do
       {:jason, "~> 1.2"},
       {:inflex, "~> 2.1"},
       {:phoenix_html, "~> 3.2"},
+      {:excoveralls, "~> 0.14.4", only: :test},
       {:faker, "~> 0.17", only: :test},
       {:credo, "~> 1.6", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.0", only: [:dev], runtime: false},
