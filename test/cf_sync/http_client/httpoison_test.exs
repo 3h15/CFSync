@@ -56,6 +56,25 @@ defmodule CFSync.HTTPClient.HTTPoisonTest do
     end
   end
 
+  test "It handles unknown errors codes" do
+    code = Faker.random_between(10000, 99000)
+
+    expect(FakeHTTPoison, :request, 1, fn _req ->
+      {:ok, %{status_code: code}}
+    end)
+
+    {result, log} =
+      with_log(
+        [level: :error],
+        fn ->
+          HTTPClient.HTTPoison.fetch("url", "token")
+        end
+      )
+
+    assert {:error, unknown} = result
+    assert log =~ "Unhandled Contentful status code: #{code}"
+  end
+
   test "It handles rate limiting" do
     delay = Faker.random_between(1, 100)
 
@@ -76,6 +95,29 @@ defmodule CFSync.HTTPClient.HTTPoisonTest do
       )
 
     assert {:rate_limited, ^delay} = result
+    assert log =~ "Contentful request failed: Rate limited"
+  end
+
+  test "It handles rate limiting with defautl delay if none is provided in headers" do
+    delay = Faker.random_between(1, 100)
+
+    expect(FakeHTTPoison, :request, 1, fn _req ->
+      {:ok,
+       %{
+         status_code: 429,
+         headers: []
+       }}
+    end)
+
+    {result, log} =
+      with_log(
+        [level: :error],
+        fn ->
+          HTTPClient.HTTPoison.fetch("url", "token")
+        end
+      )
+
+    assert {:rate_limited, 10} = result
     assert log =~ "Contentful request failed: Rate limited"
   end
 

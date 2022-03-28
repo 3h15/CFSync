@@ -17,10 +17,8 @@ defmodule CFSync.HTTPClient.HTTPoison do
       url: url
     }
 
-    case @httpoison_module.request(req) do
-      {:ok, resp} -> extract_response(resp)
-      error -> error
-    end
+    {:ok, resp} = @httpoison_module.request(req)
+    extract_response(resp)
   end
 
   defp extract_response(%{status_code: 200, body: body}) do
