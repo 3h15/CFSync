@@ -43,19 +43,33 @@ defmodule CFSync.StoreTest do
 
   test "With auto_tick on, server syncs regularly", %{start_server: start_server} do
     parent = self()
-    ref = make_ref()
+    step_ref_1 = make_ref()
+    step_ref_2 = make_ref()
+    step_ref_3 = make_ref()
 
-    expect(FakeSyncConnector, :sync, 3, fn _sp, _locale, _url ->
-      send(parent, {ref, :temp})
+    expect(FakeSyncConnector, :sync, 1, fn _sp, _locale, _url ->
+      send(parent, {step_ref_1, :temp})
       {:ok, %SyncPayload{next_url: "http://...", next_url_type: :next_page, deltas: []}}
     end)
 
-    {pid, _tick} = start_server.([])
+    {pid, _tick} = start_server.(initial_sync_interval: 10, delta_sync_interval: 10)
     allow(FakeSyncConnector, self(), pid)
 
-    assert_receive {^ref, :temp}
-    assert_receive {^ref, :temp}
-    assert_receive {^ref, :temp}
+    assert_receive {^step_ref_1, :temp}, 15
+
+    expect(FakeSyncConnector, :sync, 1, fn _sp, _locale, _url ->
+      send(parent, {step_ref_2, :temp})
+      {:ok, %SyncPayload{next_url: "http://...", next_url_type: :next_page, deltas: []}}
+    end)
+
+    assert_receive {^step_ref_2, :temp}, 15
+
+    expect(FakeSyncConnector, :sync, 1, fn _sp, _locale, _url ->
+      send(parent, {step_ref_3, :temp})
+      {:ok, %SyncPayload{next_url: "http://...", next_url_type: :next_sync, deltas: []}}
+    end)
+
+    assert_receive {^step_ref_3, :temp}, 15
   end
 
   test "Server sync pages, then deltas", %{space: space, start_server: start_server} do
