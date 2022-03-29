@@ -48,6 +48,7 @@ defmodule CFSync.Entry do
     }
   end
 
+  @spec get_name(__MODULE__.t()) :: binary
   def get_name(this) do
     Fields.get_name(this.fields)
   end
