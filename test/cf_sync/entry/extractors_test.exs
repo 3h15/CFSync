@@ -83,6 +83,21 @@ defmodule CFSync.Entry.ExtractorsTest do
         fn -> Faker.String.base64(8) end
       },
       {
+        :extract_link,
+        fn ->
+          value = %{
+            "sys" => %{
+              "linkType" => Enum.random(["Asset", "Entry"]),
+              "id" => Faker.String.base64(12)
+            }
+          }
+
+          expected_value = CFSync.Link.new(value)
+          {value, expected_value}
+        end,
+        fn -> %{} end
+      },
+      {
         :extract_links,
         fn ->
           value = [
@@ -107,6 +122,24 @@ defmodule CFSync.Entry.ExtractorsTest do
           ]
 
           expected_value = Enum.map(value, &CFSync.Link.new(&1))
+          {value, expected_value}
+        end,
+        fn -> Faker.String.base64(8) end
+      },
+      {
+        :extract_links,
+        fn ->
+          value = [
+            %{
+              "sys" => %{
+                "linkType" => Enum.random(["Asset", "Entry"]),
+                "id" => Faker.String.base64(12)
+              }
+            },
+            %{"invalid" => "link"}
+          ]
+
+          expected_value = [value |> List.first() |> CFSync.Link.new()]
           {value, expected_value}
         end,
         fn -> Faker.String.base64(8) end

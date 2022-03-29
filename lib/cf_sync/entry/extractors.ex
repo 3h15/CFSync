@@ -63,8 +63,10 @@ defmodule CFSync.Entry.Extractors do
 
   @spec extract_link({map, binary}, binary, nil | Link.t()) :: nil | Link.t()
   def extract_link({data, locale}, field, default \\ nil) do
-    case extract(data, field, locale) do
-      link_data when is_map(link_data) -> try_link(link_data)
+    with link_data when is_map(link_data) <- extract(data, field, locale),
+         %Link{} = link <- try_link(link_data) do
+      link
+    else
       _ -> default
     end
   end
