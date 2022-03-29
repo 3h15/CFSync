@@ -15,7 +15,7 @@ defmodule CFSync.StoreTest do
 
   alias CFSync.Store.Table
 
-  alias CFSync.FakeSyncConnector
+  alias CFSyncTest.FakeSyncConnector
 
   setup :verify_on_exit!
 

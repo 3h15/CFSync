@@ -6,7 +6,7 @@ defmodule CFSync.HTTPClient.HTTPoisonTest do
   import ExUnit.CaptureLog
   import Mox
 
-  alias CFSync.FakeHTTPoison
+  alias CFSyncTest.FakeHTTPoison
   alias CFSync.HTTPClient
 
   setup :verify_on_exit!

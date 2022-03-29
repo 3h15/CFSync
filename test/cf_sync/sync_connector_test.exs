@@ -5,7 +5,8 @@ defmodule CFSync.SyncConnectorTest do
 
   import Mox
 
-  alias CFSync.FakeHTTPClient
+  alias CFSyncTest.FakeHTTPClient
+
   alias CFSync.SyncConnector
   alias CFSync.Space
 
