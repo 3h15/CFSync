@@ -57,7 +57,7 @@ defmodule CFSync.HTTPClient.HTTPoisonTest do
   end
 
   test "It handles unknown errors codes" do
-    code = Faker.random_between(10000, 99000)
+    code = Faker.random_between(10_000, 99_000)
 
     expect(FakeHTTPoison, :request, 1, fn _req ->
       {:ok, %{status_code: code}}

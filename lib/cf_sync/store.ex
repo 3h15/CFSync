@@ -95,7 +95,7 @@ defmodule CFSync.Store do
   end
 
   defp schedule_tick(state, delay) do
-    if(state.auto_tick) do
+    if state.auto_tick do
       Process.send_after(self(), :sync, delay)
     end
 
