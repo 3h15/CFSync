@@ -12,7 +12,7 @@ defmodule CFSync.EntryTest do
   test "new/2 Creates a new entry with correct fields struct" do
     lang = Faker.String.base64(2)
     name = Faker.String.base64()
-    data = entry_payload(fields: %{"name" => name})
+    data = entry_payload(fields: %{"name" => %{lang => name}})
 
     assert %Entry{
              id: id,
@@ -28,7 +28,7 @@ defmodule CFSync.EntryTest do
   test "get_name/1 returns name provided by entry's fields module" do
     lang = Faker.String.base64(2)
     name = Faker.String.base64()
-    data = entry_payload(fields: %{"name" => name})
+    data = entry_payload(fields: %{"name" => %{lang => name}})
     entry = Entry.new(data, lang)
     assert Entry.get_name(entry) == "Page #{name}"
   end

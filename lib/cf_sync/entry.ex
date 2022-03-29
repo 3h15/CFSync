@@ -58,7 +58,7 @@ defmodule CFSync.Entry do
   defp new_fields(content_type, fields_data, lang) when is_atom(content_type) do
     with {:ok, mod} <- fetch_fields_module(content_type),
          {:module, ^mod} <- load_fields_module(mod) do
-      mod.new(fields_data, lang)
+      mod.new({fields_data, lang})
     else
       {:error, :no_config_for_content_type} ->
         Logger.error("No configured fields module for content_type: #{inspect(content_type)}")

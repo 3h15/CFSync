@@ -122,7 +122,7 @@ defmodule CFSync.Store.TableTest do
       id: Faker.String.base64(10),
       revision: Faker.random_between(1, 1000),
       content_type: :page,
-      fields: CFSyncTest.Fields.Page.new(%{}, "en")
+      fields: CFSyncTest.Fields.Page.new({%{}, "en"})
     }
   end
 
@@ -131,7 +131,7 @@ defmodule CFSync.Store.TableTest do
       id: Faker.String.base64(10),
       revision: Faker.random_between(1, 1000),
       content_type: :simple_page,
-      fields: CFSyncTest.Fields.SimplePage.new(%{}, "en")
+      fields: CFSyncTest.Fields.SimplePage.new({%{}, "en"})
     }
   end
 

@@ -1,6 +1,8 @@
 defmodule CFSyncTest.Fields.Page do
   alias CFSync.Entry
 
+  import CFSync.Entry.Extractors
+
   @behaviour Entry.FieldsConstructor
 
   @enforce_keys [:name]
@@ -9,9 +11,10 @@ defmodule CFSyncTest.Fields.Page do
   @type t() :: %__MODULE__{name: String.t()}
 
   @impl true
-  def new(fields_payload, _lang) do
-    name = Map.get(fields_payload, "name", "Some name")
-    %__MODULE__{name: name}
+  def new(data) do
+    %__MODULE__{
+      name: extract_binary(data, "name", "No name")
+    }
   end
 
   defimpl Entry.Fields do
