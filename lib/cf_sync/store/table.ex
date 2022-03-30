@@ -24,6 +24,20 @@ defmodule CFSync.Store.Table do
     end
   end
 
+  @spec get_table_reference_for_name(atom) :: :ets.tid()
+  def get_table_reference_for_name(name) do
+    case :ets.whereis(name) do
+      # coveralls-ignore-start
+      :undefined ->
+        raise "Could not find ETS table"
+
+      # coveralls-ignore-stop
+
+      ref ->
+        ref
+    end
+  end
+
   @spec put(:ets.tid(), CFSync.Asset.t() | CFSync.Entry.t()) :: true
   def put(ref, %Entry{id: id} = entry), do: put(ref, :entry, id, entry.content_type, entry)
   def put(ref, %Asset{id: id} = asset), do: put(ref, :asset, id, :asset, asset)
