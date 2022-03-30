@@ -44,6 +44,7 @@ defmodule CFSync.Store.Table do
     end
   end
 
+  @spec get_assets(:ets.tid()) :: list
   def get_assets(ref) do
     records = :ets.match_object(ref, {{:asset, :_}, :_, :_})
 
@@ -52,6 +53,7 @@ defmodule CFSync.Store.Table do
     end
   end
 
+  @spec get_entries(:ets.tid()) :: list
   def get_entries(ref) do
     records = :ets.match_object(ref, {{:entry, :_}, :_, :_})
 
@@ -60,6 +62,7 @@ defmodule CFSync.Store.Table do
     end
   end
 
+  @spec get_entries_for_content_type(:ets.tid(), :atom) :: list
   def get_entries_for_content_type(ref, content_type) do
     records = :ets.match_object(ref, {:_, content_type, :_})
 
