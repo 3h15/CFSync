@@ -1,6 +1,7 @@
 defmodule CFSync.Store.Table do
   alias CFSync.Entry
   alias CFSync.Asset
+  alias CFSync.Link
 
   @spec new(atom) :: :ets.tid()
   def new(name) when is_atom(name) do
@@ -83,6 +84,15 @@ defmodule CFSync.Store.Table do
     for {_key, _content_type, entry} <- records do
       entry
     end
+  end
+
+  @spec get_link_target(:ets.tid(), Link.t()) :: nil | Entry.t() | Asset.t()
+  def get_link_target(store, %Link{type: :entry, id: id}) do
+    get_entry(store, id)
+  end
+
+  def get_link_target(store, %Link{type: :asset, id: id}) do
+    get_asset(store, id)
   end
 
   @spec delete_entry(:ets.tid(), binary()) :: true

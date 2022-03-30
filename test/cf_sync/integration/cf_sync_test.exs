@@ -45,6 +45,10 @@ defmodule CFSyncTest.Integration.CFSyncTest do
     tick(pid)
     wait_for(fn -> length(get_entries(store)) == 6 end)
 
+    page = get_entry(store, "ygP74CyESVFcDpJojH0tT")
+    one = get_asset(store, "5m9oC9bksUxeHqVZXuWk8V")
+    altair = get_entry(store, "18vvU4uLfjZA409cWC7BJu")
+
     assert %Entry{
              content_type: :page,
              fields: %{
@@ -71,7 +75,7 @@ defmodule CFSyncTest.Integration.CFSyncTest do
                #  location: "",
                #  json: "",
              }
-           } = get_entry(store, "ygP74CyESVFcDpJojH0tT")
+           } = page
 
     assert %Asset{
              title: "One",
@@ -83,7 +87,10 @@ defmodule CFSyncTest.Integration.CFSyncTest do
              width: 10235,
              height: 8708,
              size: 6_568_275
-           } = get_asset(store, "5m9oC9bksUxeHqVZXuWk8V")
+           } = one
+
+    assert get_link_target(store, page.fields.one_asset) == one
+    assert get_link_target(store, List.first(page.fields.many_links)) == altair
 
     assert %Entry{fields: %{name: "Altaïr"}} = get_entry(store, "18vvU4uLfjZA409cWC7BJu")
     assert %Entry{fields: %{name: "Tarazed"}} = get_entry(store, "4fy2iBRIRPm20eaViIl0R6")
