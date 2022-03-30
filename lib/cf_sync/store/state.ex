@@ -1,12 +1,12 @@
 defmodule CFSync.Store.State do
+  @default_root_url "https://cdn.contentful.com/"
+  @default_locale "en-US"
   @default_initial_sync_interval 30
   @default_delta_sync_interval 5000
 
-  alias CFSync.Space
-
   defstruct([
     :name,
-    :space,
+    :delivery_token,
     :locale,
     :table_reference,
     :initial_sync_interval,
@@ -18,7 +18,7 @@ defmodule CFSync.Store.State do
 
   @type t() :: %__MODULE__{
           name: atom(),
-          space: Space.t(),
+          delivery_token: binary,
           locale: binary(),
           table_reference: :ets.tid(),
           initial_sync_interval: integer(),
@@ -28,23 +28,25 @@ defmodule CFSync.Store.State do
           auto_tick: boolean()
         }
 
-  @spec new(atom, Space.t(), binary, :ets.tid(), keyword) :: CFSync.Store.State.t()
-  def new(name, %Space{} = space, locale, table_reference, opts \\ [])
-      when is_atom(name) and is_binary(locale) and is_list(opts) do
+  @spec new(atom, binary, binary, :ets.tid(), keyword) :: CFSync.Store.State.t()
+  def new(name, space_id, delivery_token, table_reference, opts \\ []) do
+    root_url = Keyword.get(opts, :root_url, @default_root_url)
+    locale = Keyword.get(opts, :locale, @default_locale)
+
     initial_sync_interval =
       Keyword.get(opts, :initial_sync_interval, @default_initial_sync_interval)
 
     delta_sync_interval = Keyword.get(opts, :delta_sync_interval, @default_delta_sync_interval)
-
     auto_tick = Keyword.get(opts, :auto_tick, true)
 
     %__MODULE__{
       name: name,
-      space: space,
+      delivery_token: delivery_token,
       locale: locale,
       table_reference: table_reference,
       initial_sync_interval: initial_sync_interval,
       delta_sync_interval: delta_sync_interval,
+      next_url: initial_url(root_url, space_id),
       auto_tick: auto_tick
     }
   end
@@ -57,4 +59,6 @@ defmodule CFSync.Store.State do
         next_url_type: url_type
     }
   end
+
+  defp initial_url(root_url, space_id), do: "#{root_url}spaces/#{space_id}/sync/?initial=true"
 end

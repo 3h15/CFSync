@@ -1,4 +1,4 @@
-defmodule CFSyncTest.Integration.SyncConnectorMock.DataDelta1 do
+defmodule CFSyncTest.Integration.HTTPoisonMock.DataDelta1 do
   def payload,
     do: """
     {

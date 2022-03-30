@@ -1,16 +1,16 @@
 defmodule CFSync do
   alias CFSync.Store
-  alias CFSync.Space
   alias CFSync.Entry
   alias CFSync.Asset
   alias CFSync.Link
 
-  @spec start_link(atom, keyword) :: :ignore | {:error, any} | {:ok, pid}
-  def start_link(name, opts) when is_atom(name) and is_list(opts),
-    do: Store.start_link(name, opts)
-
-  @spec new_space(binary, binary, binary) :: Space.t()
-  def new_space(root_url, space_id, token), do: Space.new(root_url, space_id, token)
+  @spec start_link(atom, String.t(), String.t(), keyword) :: :ignore | {:error, any} | {:ok, pid}
+  def start_link(name, space_id, delivery_token, opts)
+      when is_atom(name) and
+             is_binary(space_id) and
+             is_binary(delivery_token) and
+             is_list(opts),
+      do: Store.start_link(name, space_id, delivery_token, opts)
 
   @spec from(atom) :: :ets.tid()
   def from(name), do: Store.Table.get_table_reference_for_name(name)

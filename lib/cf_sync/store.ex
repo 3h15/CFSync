@@ -15,20 +15,25 @@ defmodule CFSync.Store do
 
   alias CFSync.SyncPayload
 
-  @sync_connector_module Application.compile_env(
-                           :cf_sync,
-                           :sync_connector_module,
-                           CFSync.SyncConnector
-                         )
+  @http_client_module Application.compile_env(
+                        :cf_sync,
+                        :http_client_module,
+                        CFSync.HTTPClient.HTTPoison
+                      )
 
   # Delay between init/1 call and first sync request. This gives some time the parent
   # process to continue initializing. For example, tests rely on it to setup mocks
   # before first request. Do not lower it too much to avoid make tests brittle.
   @delay_before_start 10
 
-  @spec start_link(atom, keyword) :: :ignore | {:error, any} | {:ok, pid}
-  def start_link(name, opts \\ []) when is_atom(name) do
-    init_args = [{:name, name} | opts]
+  @spec start_link(atom, binary, binary, keyword) :: :ignore | {:error, any} | {:ok, pid}
+  def start_link(name, space_id, delivery_token, opts \\ []) do
+    init_args = [
+      {:name, name},
+      {:space_id, space_id},
+      {:delivery_token, delivery_token} | opts
+    ]
+
     GenServer.start_link(__MODULE__, init_args, name: name)
   end
 
@@ -36,23 +41,24 @@ defmodule CFSync.Store do
   @spec init(keyword) :: {:ok, State.t()}
   def init(init_args) do
     name = Keyword.fetch!(init_args, :name)
-    space = Keyword.fetch!(init_args, :space)
-    locale = Keyword.fetch!(init_args, :locale)
+    space_id = Keyword.fetch!(init_args, :space_id)
+    delivery_token = Keyword.fetch!(init_args, :delivery_token)
     table_reference = Table.new(name)
 
     state =
       name
-      |> State.new(space, locale, table_reference, init_args)
+      |> State.new(space_id, delivery_token, table_reference, init_args)
       |> schedule_tick(@delay_before_start)
 
     {:ok, state}
   end
 
   @impl true
-  def handle_info(:sync, state) do
-    case(@sync_connector_module.sync(state.space, state.locale, state.next_url)) do
-      {:ok, %SyncPayload{} = payload} ->
+  def handle_info(:sync, %State{next_url: url, delivery_token: token, locale: locale} = state) do
+    case(@http_client_module.fetch(url, token)) do
+      {:ok, data} ->
         # We got a response, handle it
+        payload = SyncPayload.new(data, locale)
 
         {:noreply,
          state

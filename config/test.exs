@@ -10,5 +10,3 @@ config :cf_sync, :fields_modules, %{
   star: CFSyncTest.Fields.Star,
   content_type_with_undefined_module: CFSyncTest.Fields.UndefinedModule
 }
-
-config :cf_sync, :sync_connector_module, CFSyncTest.FakeSyncConnector

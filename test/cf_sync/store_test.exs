@@ -7,28 +7,27 @@ defmodule CFSync.StoreTest do
   import ExUnit.CaptureLog
 
   alias CFSync.Store
-  alias CFSync.Space
-  alias CFSync.SyncPayload
 
   alias CFSync.Asset
   alias CFSync.Entry
 
   alias CFSync.Store.Table
 
-  alias CFSyncTest.FakeSyncConnector
+  alias CFSyncTest.FakeHTTPClient
 
   setup :verify_on_exit!
 
   setup do
     name = Faker.Util.format("%A%4a%A%3a") |> String.to_atom()
-    space = Space.new(Faker.Internet.url(), Faker.String.base64(), Faker.String.base64())
+    space_id = Faker.String.base64()
+    token = Faker.String.base64()
     locale = Faker.String.base64(2)
 
     start_server = fn opts ->
       name = Keyword.get(opts, :name, name)
-      opts = opts ++ [space: space, locale: locale]
+      opts = opts ++ [locale: locale]
       opts = Enum.uniq_by(opts, fn {k, _v} -> k end)
-      {:ok, pid} = Store.start_link(name, opts)
+      {:ok, pid} = Store.start_link(name, space_id, token, opts)
 
       tick = fn ->
         send(pid, :sync)
@@ -37,7 +36,7 @@ defmodule CFSync.StoreTest do
       {pid, tick}
     end
 
-    %{name: name, space: space, locale: locale, start_server: start_server}
+    %{name: name, space_id: space_id, token: token, locale: locale, start_server: start_server}
   end
 
   test "start_link/2 starts the server", %{start_server: start_server} do
@@ -50,59 +49,65 @@ defmodule CFSync.StoreTest do
     parent = self()
 
     {pid, _tick} = start_server.(initial_sync_interval: 10, delta_sync_interval: 10)
-    allow(FakeSyncConnector, self(), pid)
+    allow(FakeHTTPClient, self(), pid)
 
-    # Step 1, return :next_page
+    # Step 1, next page
     step_ref_1 = make_ref()
 
-    expect(FakeSyncConnector, :sync, 1, fn _sp, _locale, _url ->
+    expect(FakeHTTPClient, :fetch, 1, fn _url, _token ->
       send(parent, {step_ref_1, :temp})
-      {:ok, %SyncPayload{next_url: "http://...", next_url_type: :next_page, deltas: []}}
+      {:ok, %{"nextPageUrl" => "http://...", "items" => []}}
     end)
 
     assert_receive {^step_ref_1, :temp}, 15
 
-    # Step 2, return :next_page
+    # Step 2, next page
     step_ref_2 = make_ref()
 
-    expect(FakeSyncConnector, :sync, 1, fn _sp, _locale, _url ->
+    expect(FakeHTTPClient, :fetch, 1, fn _url, _token ->
       send(parent, {step_ref_2, :temp})
-      {:ok, %SyncPayload{next_url: "http://...", next_url_type: :next_page, deltas: []}}
+      {:ok, %{"nextPageUrl" => "http://...", "items" => []}}
     end)
 
     assert_receive {^step_ref_2, :temp}, 15
 
-    # Step 3, return :next_sync
+    # Step 3, next sync
     step_ref_3 = make_ref()
 
-    expect(FakeSyncConnector, :sync, 1, fn _sp, _locale, _url ->
+    expect(FakeHTTPClient, :fetch, 1, fn _url, _token ->
       send(parent, {step_ref_3, :temp})
-      {:ok, %SyncPayload{next_url: "http://...", next_url_type: :next_sync, deltas: []}}
+      {:ok, %{"nextSyncUrl" => "http://...", "items" => []}}
     end)
 
     assert_receive {^step_ref_3, :temp}, 15
   end
 
-  test "Server sync pages, then deltas", %{space: space, start_server: start_server} do
+  test "Server sync pages, then deltas", %{
+    space_id: space_id,
+    token: token,
+    start_server: start_server
+  } do
     parent = self()
 
-    next_sync_with = fn expected_url, ref, next_url, next_url_type ->
-      expect(FakeSyncConnector, :sync, fn sp, _locale, url ->
-        assert sp == space
+    next_sync_with = fn expected_url, ref, next_url, next_url_key ->
+      expect(FakeHTTPClient, :fetch, fn url, tok ->
         assert url == expected_url
+        assert token == tok
 
         send(parent, {ref, :temp})
-        {:ok, %SyncPayload{next_url: next_url, next_url_type: next_url_type, deltas: []}}
+
+        {:ok, %{next_url_key => next_url, "items" => []}}
       end)
     end
 
     {pid, tick} = start_server.(auto_tick: false)
-    allow(FakeSyncConnector, self(), pid)
+    allow(FakeHTTPClient, self(), pid)
 
     step_ref_1 = make_ref()
     url_1 = Faker.Internet.url()
 
-    next_sync_with.(nil, step_ref_1, url_1, :next_page)
+    initial_url = "https://cdn.contentful.com/spaces/#{space_id}/sync/?initial=true"
+    next_sync_with.(initial_url, step_ref_1, url_1, "nextPageUrl")
 
     tick.()
     assert_receive {^step_ref_1, :temp}
@@ -110,7 +115,7 @@ defmodule CFSync.StoreTest do
     step_ref_2 = make_ref()
     url_2 = Faker.Internet.url()
 
-    next_sync_with.(url_1, step_ref_2, url_2, :next_page)
+    next_sync_with.(url_1, step_ref_2, url_2, "nextSyncUrl")
 
     tick.()
     assert_receive {^step_ref_2, :temp}
@@ -118,7 +123,7 @@ defmodule CFSync.StoreTest do
     step_ref_3 = make_ref()
     url_3 = Faker.Internet.url()
 
-    next_sync_with.(url_2, step_ref_3, url_3, :next_sync)
+    next_sync_with.(url_2, step_ref_3, url_3, "nextSyncUrl")
 
     tick.()
     assert_receive {^step_ref_3, :temp}
@@ -134,12 +139,12 @@ defmodule CFSync.StoreTest do
 
     step_ref_1 = make_ref()
 
-    expect(FakeSyncConnector, :sync, fn _space, _locale, _url ->
+    expect(FakeHTTPClient, :fetch, fn _url, _token ->
       send(parent, {step_ref_1, :temp})
       {:error, :any_message}
     end)
 
-    allow(FakeSyncConnector, self(), pid)
+    allow(FakeHTTPClient, self(), pid)
 
     {_result, log} =
       with_log(
@@ -165,12 +170,12 @@ defmodule CFSync.StoreTest do
 
     step_ref_1 = make_ref()
 
-    expect(FakeSyncConnector, :sync, fn _space, _locale, _url ->
+    expect(FakeHTTPClient, :fetch, fn _url, _token ->
       send(parent, {step_ref_1, :temp})
       {:rate_limited, Faker.random_between(1, 100)}
     end)
 
-    allow(FakeSyncConnector, self(), pid)
+    allow(FakeHTTPClient, self(), pid)
 
     tick.()
     assert_receive {^step_ref_1, :temp}
@@ -223,14 +228,14 @@ defmodule CFSync.StoreTest do
     end
 
     {pid, tick} = start_server.(auto_tick: false)
-    allow(FakeSyncConnector, self(), pid)
+    allow(FakeHTTPClient, self(), pid)
 
     sync_with = fn items ->
       ref = make_ref()
 
-      expect(FakeSyncConnector, :sync, fn _space, _locale, _url ->
+      expect(FakeHTTPClient, :fetch, fn _url, _token ->
         send(parent, {ref, :temp})
-        {:ok, SyncPayload.new(%{"nextSyncUrl" => "", "items" => items}, locale)}
+        {:ok, %{"nextSyncUrl" => "", "items" => items}}
       end)
 
       tick.()
@@ -241,9 +246,9 @@ defmodule CFSync.StoreTest do
       # they're inserted
       ref = make_ref()
 
-      expect(FakeSyncConnector, :sync, fn _space, _locale, _url ->
+      expect(FakeHTTPClient, :fetch, fn _url, _token ->
         send(parent, {ref, :temp})
-        {:ok, SyncPayload.new(%{"nextSyncUrl" => "", "items" => []}, locale)}
+        {:ok, %{"nextSyncUrl" => "", "items" => []}}
       end)
 
       tick.()

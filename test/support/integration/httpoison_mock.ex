@@ -1,9 +1,9 @@
 defmodule CFSyncTest.Integration.HTTPoisonMock do
   @behaviour CFSyncTest.HTTPoisonBehaviour
 
-  alias CFSyncTest.Integration.SyncConnectorMock.DataInitial
-  alias CFSyncTest.Integration.SyncConnectorMock.DataDelta1
-  alias CFSyncTest.Integration.SyncConnectorMock.DataDelta2
+  alias CFSyncTest.Integration.HTTPoisonMock.DataInitial
+  alias CFSyncTest.Integration.HTTPoisonMock.DataDelta1
+  alias CFSyncTest.Integration.HTTPoisonMock.DataDelta2
 
   def request(%HTTPoison.Request{
         method: :get,

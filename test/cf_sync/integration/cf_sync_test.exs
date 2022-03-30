@@ -2,7 +2,6 @@ defmodule CFSyncTest.Integration.CFSyncTest do
   use ExUnit.Case, async: true
 
   alias CFSyncTest.FakeHTTPoison
-  alias CFSyncTest.FakeSyncConnector
   alias CFSyncTest.FakeHTTPClient
   alias CFSyncTest.Integration.HTTPoisonMock
   alias CFSyncTest.IntegrationTestServer
@@ -20,22 +19,14 @@ defmodule CFSyncTest.Integration.CFSyncTest do
 
     # Stub with real modules for integration tests
     stub_with(FakeHTTPClient, CFSync.HTTPClient.HTTPoison)
-    stub_with(FakeSyncConnector, CFSync.SyncConnector)
 
-    space =
-      new_space(
-        "https://cdn.contentful.com/",
-        "diw11gmz6opc",
-        "unC_qLLrGg1iSOK1mHU0IUenA-Ji3deWGjp3H8VRSQA"
-      )
+    space_id = "diw11gmz6opc"
+    token = "unC_qLLrGg1iSOK1mHU0IUenA-Ji3deWGjp3H8VRSQA"
 
-    locale = "en-US"
-
-    {:ok, pid} = start_link(IntegrationTestServer, space: space, locale: locale, auto_tick: false)
+    {:ok, pid} = start_link(IntegrationTestServer, space_id, token, auto_tick: false)
 
     allow(FakeHTTPoison, self(), pid)
     allow(FakeHTTPClient, self(), pid)
-    allow(FakeSyncConnector, self(), pid)
 
     store = from(IntegrationTestServer)
 
