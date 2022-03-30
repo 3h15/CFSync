@@ -6,7 +6,7 @@ defmodule CFSync.AssetTest do
   alias CFSync.Asset
 
   test "new/2 Creates a new asset and correctly maps all values" do
-    lang = Faker.String.base64(2)
+    locale = Faker.String.base64(2)
     id = Faker.String.base64()
     title = Faker.String.base64()
     description = Faker.String.base64()
@@ -23,10 +23,10 @@ defmodule CFSync.AssetTest do
         "type" => "Asset"
       },
       "fields" => %{
-        "title" => %{lang => title},
-        "description" => %{lang => description},
+        "title" => %{locale => title},
+        "description" => %{locale => description},
         "file" => %{
-          lang => %{
+          locale => %{
             "contentType" => content_type,
             "fileName" => file_name,
             "url" => url,
@@ -52,7 +52,7 @@ defmodule CFSync.AssetTest do
              width: ^width,
              height: ^height,
              size: ^size
-           } = Asset.new(data, lang)
+           } = Asset.new(data, locale)
 
     assert id == data["sys"]["id"]
   end

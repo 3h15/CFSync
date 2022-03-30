@@ -18,13 +18,13 @@ defmodule CFSync.SyncConnector do
   alias CFSync.SyncPayload
 
   @impl true
-  def sync(space, lang, url \\ nil)
-  def sync(%Space{} = space, lang, nil), do: sync(space, lang, initial_url(space))
+  def sync(space, locale, url \\ nil)
+  def sync(%Space{} = space, locale, nil), do: sync(space, locale, initial_url(space))
 
-  def sync(%Space{} = space, lang, url) do
+  def sync(%Space{} = space, locale, url) do
     case @http_client_module.fetch(url, space.token) do
       {:ok, data} ->
-        {:ok, SyncPayload.new(data, lang)}
+        {:ok, SyncPayload.new(data, locale)}
 
       {:rate_limited, _} = limit ->
         limit

@@ -37,16 +37,16 @@ defmodule CFSync.Asset do
           },
           "fields" => fields
         },
-        lang
+        locale
       ) do
-    title = fields["title"][lang] || ""
-    description = fields["description"][lang] || ""
-    content_type = fields["file"][lang]["contentType"] || ""
-    file_name = fields["file"][lang]["fileName"] || ""
-    url = fields["file"][lang]["url"] || ""
-    width = fields["file"][lang]["details"]["image"]["width"] || 0
-    height = fields["file"][lang]["details"]["image"]["height"] || 0
-    size = fields["file"][lang]["details"]["size"] || 0
+    title = fields["title"][locale] || ""
+    description = fields["description"][locale] || ""
+    content_type = fields["file"][locale]["contentType"] || ""
+    file_name = fields["file"][locale]["fileName"] || ""
+    url = fields["file"][locale]["url"] || ""
+    width = fields["file"][locale]["details"]["image"]["width"] || 0
+    height = fields["file"][locale]["details"]["image"]["height"] || 0
+    size = fields["file"][locale]["details"]["size"] || 0
 
     %__MODULE__{
       id: id,

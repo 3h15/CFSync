@@ -10,26 +10,26 @@ defmodule CFSync.EntryTest do
   import ExUnit.CaptureLog
 
   test "new/2 Creates a new entry with correct fields struct" do
-    lang = Faker.String.base64(2)
+    locale = Faker.String.base64(2)
     name = Faker.String.base64()
-    data = entry_payload(fields: %{"name" => %{lang => name}})
+    data = entry_payload(fields: %{"name" => %{locale => name}})
 
     assert %Entry{
              id: id,
              revision: revision,
              content_type: :page,
              fields: %Page{name: ^name}
-           } = Entry.new(data, lang)
+           } = Entry.new(data, locale)
 
     assert id == data["sys"]["id"]
     assert revision == data["sys"]["revision"]
   end
 
   test "get_name/1 returns name provided by entry's fields module" do
-    lang = Faker.String.base64(2)
+    locale = Faker.String.base64(2)
     name = Faker.String.base64()
-    data = entry_payload(fields: %{"name" => %{lang => name}})
-    entry = Entry.new(data, lang)
+    data = entry_payload(fields: %{"name" => %{locale => name}})
+    entry = Entry.new(data, locale)
     assert Entry.get_name(entry) == "Page #{name}"
   end
 
@@ -48,8 +48,8 @@ defmodule CFSync.EntryTest do
     ]
 
     for content_type <- content_types do
-      lang = Faker.String.base64(2)
-      entry = entry_payload(content_type: content_type) |> Entry.new(lang)
+      locale = Faker.String.base64(2)
+      entry = entry_payload(content_type: content_type) |> Entry.new(locale)
 
       assert %Entry{
                content_type: :simple_page,
@@ -59,7 +59,7 @@ defmodule CFSync.EntryTest do
   end
 
   test "It logs an error when content-type has no corresponding local atom" do
-    lang = Faker.String.base64(2)
+    locale = Faker.String.base64(2)
     content_type = "unknown-content-type-" <> Faker.String.base64()
     data = entry_payload(content_type: content_type)
 
@@ -67,7 +67,7 @@ defmodule CFSync.EntryTest do
       with_log(
         [level: :error],
         fn ->
-          Entry.new(data, lang)
+          Entry.new(data, locale)
         end
       )
 
@@ -80,7 +80,7 @@ defmodule CFSync.EntryTest do
   end
 
   test "It logs an error when content-type has no configured module" do
-    lang = Faker.String.base64(2)
+    locale = Faker.String.base64(2)
     content_type = "unknown-content-type-" <> Faker.String.base64()
     # Convert content_type to atom to simulate existing atom
     content_type_atom = content_type |> Inflex.underscore() |> String.to_atom()
@@ -91,7 +91,7 @@ defmodule CFSync.EntryTest do
       with_log(
         [level: :error],
         fn ->
-          Entry.new(data, lang)
+          Entry.new(data, locale)
         end
       )
 
@@ -104,7 +104,7 @@ defmodule CFSync.EntryTest do
   end
 
   test "It logs an error when module for content-type is not defined" do
-    lang = Faker.String.base64(2)
+    locale = Faker.String.base64(2)
     content_type = "content_type_with_undefined_module"
 
     data = entry_payload(content_type: content_type)
@@ -113,7 +113,7 @@ defmodule CFSync.EntryTest do
       with_log(
         [level: :error],
         fn ->
-          Entry.new(data, lang)
+          Entry.new(data, locale)
         end
       )
 
