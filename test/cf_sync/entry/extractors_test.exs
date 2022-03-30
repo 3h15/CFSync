@@ -19,8 +19,13 @@ defmodule CFSync.Entry.ExtractorsTest do
         fn -> Faker.random_between(0, 1000) end
       },
       {
-        :extract_integer,
+        :extract_number,
         fn -> Faker.random_between(0, 1000) end,
+        fn -> Faker.String.base64(8) end
+      },
+      {
+        :extract_number,
+        fn -> Faker.random_between(0, 1000) / 100 end,
         fn -> Faker.String.base64(8) end
       },
       {
@@ -28,6 +33,14 @@ defmodule CFSync.Entry.ExtractorsTest do
         fn ->
           date = Faker.Date.between(~D[0001-01-01], ~D[3000-01-01])
           {Date.to_iso8601(date), date}
+        end,
+        fn -> Faker.String.base64(5) end
+      },
+      {
+        :extract_datetime,
+        fn ->
+          date = Faker.DateTime.between(~N[0001-01-01 00:00:00], ~N[3000-01-01 00:00:00])
+          {DateTime.to_iso8601(date), date}
         end,
         fn -> Faker.String.base64(5) end
       },
@@ -182,7 +195,11 @@ defmodule CFSync.Entry.ExtractorsTest do
   } do
     for {fun, valid_value, _invalid_value} <- extractors do
       {name, locale, expected_value, data} = build.(valid_value)
-      assert apply(Extractors, fun, [{data, locale}, name]) == expected_value
+
+      result = apply(Extractors, fun, [{data, locale}, name])
+
+      assert result == expected_value,
+             "#{fun} with value #{inspect(data)} does not return #{inspect(expected_value)} but #{inspect(result)}"
     end
   end
 

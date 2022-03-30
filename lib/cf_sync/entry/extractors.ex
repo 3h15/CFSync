@@ -26,10 +26,10 @@ defmodule CFSync.Entry.Extractors do
     end
   end
 
-  @spec extract_integer({map, binary}, binary, nil | integer) :: nil | integer
-  def extract_integer({data, locale}, field, default \\ nil) do
+  @spec extract_number({map, binary}, binary, nil | number) :: nil | number
+  def extract_number({data, locale}, field, default \\ nil) do
     case extract(data, field, locale) do
-      v when is_integer(v) -> v
+      v when is_number(v) -> v
       _ -> default
     end
   end
@@ -38,6 +38,17 @@ defmodule CFSync.Entry.Extractors do
   def extract_date({data, locale}, field, default \\ nil) do
     with v when is_binary(v) <- extract(data, field, locale),
          {:ok, date} <- Date.from_iso8601(v) do
+      date
+    else
+      _ ->
+        default
+    end
+  end
+
+  @spec extract_datetime({map, binary}, binary, nil | DateTime.t()) :: nil | DateTime.t()
+  def extract_datetime({data, locale}, field, default \\ nil) do
+    with v when is_binary(v) <- extract(data, field, locale),
+         {:ok, date, _offset} <- DateTime.from_iso8601(v) do
       date
     else
       _ ->
