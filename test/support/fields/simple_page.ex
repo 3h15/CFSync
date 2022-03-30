@@ -13,11 +13,4 @@ defmodule CFSyncTest.Fields.SimplePage do
     name = Map.get(fields_payload, "name", "Some name")
     %__MODULE__{name: name}
   end
-
-  defimpl Entry.Fields do
-    @spec get_name(CFSyncTest.Fields.Page.t()) :: binary()
-    def get_name(this) do
-      "Simple page #{this.name}"
-    end
-  end
 end

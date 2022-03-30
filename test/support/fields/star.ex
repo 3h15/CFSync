@@ -16,11 +16,4 @@ defmodule CFSyncTest.Fields.Star do
       name: extract_binary(data, "name", "No name")
     }
   end
-
-  defimpl Entry.Fields do
-    @spec get_name(CFSyncTest.Fields.Page.t()) :: binary()
-    def get_name(this) do
-      "Star #{this.name}"
-    end
-  end
 end

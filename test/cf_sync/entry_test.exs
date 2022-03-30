@@ -25,14 +25,6 @@ defmodule CFSync.EntryTest do
     assert revision == data["sys"]["revision"]
   end
 
-  test "get_name/1 returns name provided by entry's fields module" do
-    locale = Faker.String.base64(2)
-    name = Faker.String.base64()
-    data = entry_payload(fields: %{"name" => %{locale => name}})
-    entry = Entry.new(data, locale)
-    assert Entry.get_name(entry) == "Page #{name}"
-  end
-
   test "It parses content-type to snake case atom" do
     content_types = [
       "SimplePage",

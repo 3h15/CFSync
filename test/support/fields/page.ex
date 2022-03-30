@@ -58,11 +58,4 @@ defmodule CFSyncTest.Fields.Page do
       many_links: extract_links(data, "many_links")
     }
   end
-
-  defimpl Entry.Fields do
-    @spec get_name(CFSyncTest.Fields.Page.t()) :: binary()
-    def get_name(this) do
-      "Page #{this.name}"
-    end
-  end
 end

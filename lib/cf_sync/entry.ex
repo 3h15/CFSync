@@ -48,11 +48,6 @@ defmodule CFSync.Entry do
     }
   end
 
-  @spec get_name(__MODULE__.t()) :: binary
-  def get_name(this) do
-    Fields.get_name(this.fields)
-  end
-
   defp new_fields(:unknown, _fields_data, _locale), do: nil
 
   defp new_fields(content_type, fields_data, locale) when is_atom(content_type) do
