@@ -1,9 +1,10 @@
 defmodule CFSyncTest.Fields.Star do
+  @moduledoc false
+
   alias CFSync.Entry
 
   import CFSync.Entry.Extractors
-
-  @behaviour Entry.FieldsConstructor
+  @behaviour Entry.Fields
 
   @enforce_keys [:name]
   defstruct [:name]

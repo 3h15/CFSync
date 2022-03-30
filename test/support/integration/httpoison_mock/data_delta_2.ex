@@ -1,4 +1,6 @@
 defmodule CFSyncTest.Integration.HTTPoisonMock.DataDelta2 do
+  @moduledoc false
+
   def payload,
     do: """
     {

@@ -1,6 +1,7 @@
 defmodule CFSync.RichText do
   @moduledoc """
-  RichText struct
+  RichText recursive struct
+
   RichText in Contentful is implemented as a tree of nodes.
   All nodes share a common structure and some of them have specific properties.
   Here I chosed to represent all nodes with a single struct for simplicity.

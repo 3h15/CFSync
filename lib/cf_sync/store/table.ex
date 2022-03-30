@@ -1,4 +1,6 @@
 defmodule CFSync.Store.Table do
+  @moduledoc false
+
   alias CFSync.Entry
   alias CFSync.Asset
   alias CFSync.Link

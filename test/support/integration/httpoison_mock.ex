@@ -1,4 +1,6 @@
 defmodule CFSyncTest.Integration.HTTPoisonMock do
+  @moduledoc false
+
   @behaviour CFSyncTest.HTTPoisonBehaviour
 
   alias CFSyncTest.Integration.HTTPoisonMock.DataInitial

@@ -1,4 +1,6 @@
 defmodule CFSyncTest.Integration.HTTPoisonMock.DataInitial do
+  @moduledoc false
+
   def payload,
     do: """
     {

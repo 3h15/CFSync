@@ -1,4 +1,6 @@
 defmodule CFSync.HTTPClient.HTTPoison do
+  @moduledoc false
+
   @behaviour CFSync.HTTPClient
 
   @httpoison_module Application.compile_env(:cf_sync, :httpoison_module, HTTPoison)

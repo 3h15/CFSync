@@ -75,7 +75,7 @@ defmodule CFSyncTest.Integration.CFSyncTest do
              file_name: "one.jpg",
              url:
                "//images.ctfassets.net/diw11gmz6opc/5m9oC9bksUxeHqVZXuWk8V/852c68b98e8e5383ade431cb8dbef27f/one.jpg",
-             width: 10235,
+             width: 10_235,
              height: 8708,
              size: 6_568_275
            } = one

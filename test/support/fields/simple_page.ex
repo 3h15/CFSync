@@ -1,7 +1,9 @@
 defmodule CFSyncTest.Fields.SimplePage do
+  @moduledoc false
+
   alias CFSync.Entry
 
-  @behaviour Entry.FieldsConstructor
+  @behaviour Entry.Fields
 
   @enforce_keys [:name]
   defstruct [:name]

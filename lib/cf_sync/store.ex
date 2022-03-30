@@ -1,11 +1,6 @@
 defmodule CFSync.Store do
-  @moduledoc """
-  This GenServer stores data retrieved from Contentful via Sync module
-  It regularly fetches new data from Contentful and updates it's content
-  Entries and assets are stored as local structs, original data from json is discarded
-  Data can be retrieved through this module's public API
-  Public API functions are memoized and invalidated on updates.
-  """
+  @moduledoc false
+
   require Logger
 
   use GenServer

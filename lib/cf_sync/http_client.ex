@@ -1,4 +1,6 @@
 defmodule CFSync.HTTPClient do
+  @moduledoc false
+
   @type result :: {:ok, any()}
 
   @type error_code :: :unauthorized | :unprocessable

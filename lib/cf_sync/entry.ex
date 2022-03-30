@@ -1,6 +1,8 @@
 defmodule CFSync.Entry do
   @moduledoc """
-  Base entry struct
+  The `Entry` struct holds standard data from Contentful entries. It's provided as
+  is and is not configurable, so if you need more fields than those currently mapped,
+  feel free to send a PR.
   """
 
   require Logger
@@ -19,6 +21,7 @@ defmodule CFSync.Entry do
           fields: Fields.t()
         }
 
+  @doc false
   @spec new(map, binary) :: t()
   def new(
         %{

@@ -1,6 +1,8 @@
 defmodule CFSync.Asset do
   @moduledoc """
-  Asset struct
+  The `Asset` struct holds data from Contentful assets. It's provided as
+  is and is not configurable, so if you need more fields than those currently mapped,
+  feel free to send a PR.
   """
 
   @enforce_keys [
@@ -28,6 +30,7 @@ defmodule CFSync.Asset do
           size: integer()
         }
 
+  @doc false
   @spec new(map, binary()) :: t()
   def new(
         %{

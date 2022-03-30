@@ -1,4 +1,6 @@
 defmodule CFSync.SyncPayload do
+  @moduledoc false
+
   alias CFSync.Entry
   alias CFSync.Asset
 

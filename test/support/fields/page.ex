@@ -1,11 +1,11 @@
 defmodule CFSyncTest.Fields.Page do
+  @moduledoc false
+
   alias CFSync.Entry
   alias CFSync.Asset
-  # alias CFSync.Link
 
   import CFSync.Entry.Extractors
-
-  @behaviour Entry.FieldsConstructor
+  @behaviour Entry.Fields
 
   @enforce_keys [
     :name,
