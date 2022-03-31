@@ -10,6 +10,9 @@ defmodule CFSync.MixProject do
       description: description(),
       package: package(),
       source_url: "https://github.com/3h15/CFSync",
+      docs: [
+        main: "CFSync"
+      ],
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       elixirc_paths: elixirc_paths(Mix.env()),
