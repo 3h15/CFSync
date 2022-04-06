@@ -25,32 +25,22 @@ defmodule CFSync.EntryTest do
     assert revision == data["sys"]["revision"]
   end
 
-  test "It parses content-type to snake case atom" do
+  test "It fetches content_type atom from config" do
     content_types = [
-      "SimplePage",
-      "simplePage",
-      "SIMPLE_PAGE",
-      "simple_page",
-      "Simple_Page",
-      "simple_Page",
-      "SIMPLE-PAGE",
-      "simple-page",
-      "Simple-Page",
-      "simple-Page"
+      {"page", :page},
+      {"simplePage", :simple_page},
+      {"star", :star}
     ]
 
-    for content_type <- content_types do
+    for {given, expected} <- content_types do
       locale = Faker.String.base64(2)
-      entry = entry_payload(content_type: content_type) |> Entry.new(locale)
+      entry = entry_payload(content_type: given) |> Entry.new(locale)
 
-      assert %Entry{
-               content_type: :simple_page,
-               fields: %SimplePage{}
-             } = entry
+      assert %Entry{content_type: ^expected} = entry
     end
   end
 
-  test "It logs an error when content-type has no corresponding local atom" do
+  test "It logs an error when content-type has no configuration" do
     locale = Faker.String.base64(2)
     content_type = "unknown-content-type-" <> Faker.String.base64()
     data = entry_payload(content_type: content_type)
@@ -68,12 +58,13 @@ defmodule CFSync.EntryTest do
              fields: nil
            } = result
 
-    assert log =~ "Unknown entry content_type: #{inspect(content_type)}"
+    assert log =~ "CFSync configuration error for content type \"#{content_type}\":"
+    assert log =~ "No configuration data."
   end
 
-  test "It logs an error when content-type has no configured module" do
+  test "It logs an error when content-type has invalid configuration map" do
     locale = Faker.String.base64(2)
-    content_type = "unknown-content-type-" <> Faker.String.base64()
+    content_type = "contentTypeWithInvalidConfiguration"
     # Convert content_type to atom to simulate existing atom
     content_type_atom = content_type |> Inflex.underscore() |> String.to_atom()
 
@@ -88,16 +79,17 @@ defmodule CFSync.EntryTest do
       )
 
     assert %Entry{
-             content_type: ^content_type_atom,
+             content_type: :unknown,
              fields: nil
            } = result
 
-    assert log =~ "No configured fields module for content_type: #{inspect(content_type_atom)}"
+    assert log =~ "CFSync configuration error for content type \"#{content_type}\":"
+    assert log =~ "Invalid configuration data."
   end
 
   test "It logs an error when module for content-type is not defined" do
     locale = Faker.String.base64(2)
-    content_type = "content_type_with_undefined_module"
+    content_type = "contentTypeWithUndefinedModule"
 
     data = entry_payload(content_type: content_type)
 
@@ -110,11 +102,12 @@ defmodule CFSync.EntryTest do
       )
 
     assert %Entry{
-             content_type: :content_type_with_undefined_module,
+             content_type: :unknown,
              fields: nil
            } = result
 
-    assert log =~ "Undefined module: CFSyncTest.Fields.UndefinedModule"
+    assert log =~ "CFSync configuration error for content type \"#{content_type}\":"
+    assert log =~ "Undefined fields module: CFSyncTest.Fields.UndefinedModule"
   end
 
   defp entry_payload(opts) do

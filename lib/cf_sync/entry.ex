@@ -9,7 +9,7 @@ defmodule CFSync.Entry do
 
   alias CFSync.Entry.Fields
 
-  @fields_modules Application.compile_env(:cf_sync, :fields_modules, %{})
+  @content_types Application.compile_env(:cf_sync, :content_types, %{})
 
   @enforce_keys [:id, :revision, :content_type, :fields]
   defstruct [:id, :revision, :content_type, :fields]
@@ -39,62 +39,68 @@ defmodule CFSync.Entry do
         },
         locale
       ) do
-    content_type = parse_content_type(content_type)
+    case get_config_for_content_type(content_type) do
+      {:ok, config} ->
+        fields = config.fields_module.new({fields, locale})
 
-    fields = new_fields(content_type, fields, locale)
+        %__MODULE__{
+          id: id,
+          revision: revision,
+          content_type: config.content_type,
+          fields: fields
+        }
 
-    %__MODULE__{
-      id: id,
-      revision: revision,
-      content_type: content_type,
-      fields: fields
-    }
+      :error ->
+        %__MODULE__{
+          id: id,
+          revision: revision,
+          content_type: :unknown,
+          fields: nil
+        }
+    end
   end
 
-  defp new_fields(:unknown, _fields_data, _locale), do: nil
-
-  defp new_fields(content_type, fields_data, locale) when is_atom(content_type) do
-    with {:ok, mod} <- fetch_fields_module(content_type),
-         {:module, ^mod} <- load_fields_module(mod) do
-      mod.new({fields_data, locale})
+  defp get_config_for_content_type(content_type) when is_binary(content_type) do
+    with {:ok, config} <- fetch_config_for_content_type(content_type),
+         :ok <- validate_config(config) do
+      {:ok, config}
     else
       {:error, :no_config_for_content_type} ->
-        Logger.error("No configured fields module for content_type: #{inspect(content_type)}")
-        nil
+        error(content_type, "No configuration data.")
+
+      {:error, :invalid_config} ->
+        error(content_type, "Invalid configuration data.")
 
       {:error, :undefined_fields_module, mod} ->
-        Logger.error("Undefined module: #{inspect(mod)}")
-        nil
+        error(content_type, "Undefined fields module: #{inspect(mod)}.")
     end
   end
 
-  defp fetch_fields_module(content_type) do
-    case Map.fetch(@fields_modules, content_type) do
-      {:ok, mod} when is_atom(mod) ->
-        {:ok, mod}
+  defp error(content_type, msg) do
+    Logger.error("CFSync configuration error for content type \"#{content_type}\":")
+    Logger.error(msg)
+    :error
+  end
 
-      _ ->
-        {:error, :no_config_for_content_type}
+  defp fetch_config_for_content_type(content_type) do
+    case Map.fetch(@content_types, content_type) do
+      {:ok, config} -> {:ok, config}
+      _ -> {:error, :no_config_for_content_type}
     end
   end
 
-  defp load_fields_module(mod) do
-    case Code.ensure_loaded(mod) do
-      {:module, ^mod} ->
-        {:module, mod}
-
-      _ ->
-        {:error, :undefined_fields_module, mod}
+  defp validate_config(%{
+         content_type: content_type,
+         fields_module: fields_module
+       })
+       when is_atom(content_type) and is_atom(fields_module) do
+    case Code.ensure_loaded(fields_module) do
+      {:module, ^fields_module} -> :ok
+      _ -> {:error, :undefined_fields_module, fields_module}
     end
   end
 
-  defp parse_content_type(content_type) do
-    content_type
-    |> Inflex.underscore()
-    |> String.to_existing_atom()
-  rescue
-    _ ->
-      Logger.error("Unknown entry content_type: #{inspect(content_type)}")
-      :unknown
+  defp validate_config(_invalid) do
+    {:error, :invalid_config}
   end
 end
