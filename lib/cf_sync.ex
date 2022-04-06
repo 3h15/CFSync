@@ -44,8 +44,15 @@ defmodule CFSync do
 
   # Setup your content-types in config.exs
   config :cf_sync, :fields_modules, %{
-    page: MyApp.PageFields,
-    author: MyApp.AuthorFields,
+    # "page" key is the content_type ID as configured in Contentful
+    "page" => %{
+      content_type: :page,
+      fields_module: MyApp.PageFields,
+    },
+    "author" => %{
+      content_type: :author,
+      fields_module: MyApp.AuthorFields,
+    }
     # ...
   }
 
