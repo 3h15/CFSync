@@ -15,7 +15,8 @@ defmodule CFSync.Store.State do
     :delta_sync_interval,
     :next_url,
     next_url_type: :next_page,
-    auto_tick: true
+    auto_tick: true,
+    invalidation_callbacks: []
   ])
 
   @type t() :: %__MODULE__{
@@ -27,7 +28,8 @@ defmodule CFSync.Store.State do
           delta_sync_interval: integer(),
           next_url: nil | binary(),
           next_url_type: :next_page | :next_sync,
-          auto_tick: boolean()
+          auto_tick: boolean(),
+          invalidation_callbacks: [function()]
         }
 
   @spec new(atom, binary, binary, :ets.tid(), keyword) :: CFSync.Store.State.t()
@@ -41,6 +43,8 @@ defmodule CFSync.Store.State do
     delta_sync_interval = Keyword.get(opts, :delta_sync_interval, @default_delta_sync_interval)
     auto_tick = Keyword.get(opts, :auto_tick, true)
 
+    invalidation_callbacks = Keyword.get(opts, :invalidation_callbacks, [])
+
     %__MODULE__{
       name: name,
       delivery_token: delivery_token,
@@ -49,7 +53,8 @@ defmodule CFSync.Store.State do
       initial_sync_interval: initial_sync_interval,
       delta_sync_interval: delta_sync_interval,
       next_url: initial_url(root_url, space_id),
-      auto_tick: auto_tick
+      auto_tick: auto_tick,
+      invalidation_callbacks: invalidation_callbacks
     }
   end
 

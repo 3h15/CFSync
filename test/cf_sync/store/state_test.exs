@@ -33,7 +33,8 @@ defmodule CFSync.Store.StateTest do
              delta_sync_interval: 5000,
              next_url: ^expected_url,
              next_url_type: :next_page,
-             auto_tick: true
+             auto_tick: true,
+             invalidation_callbacks: []
            } = s
   end
 
@@ -50,13 +51,17 @@ defmodule CFSync.Store.StateTest do
 
     expected_url = root_url <> "spaces/" <> space_id <> "/sync/?initial=true"
 
+    cb = fn -> nil end
+    invalidation_callbacks = [cb]
+
     s =
       State.new(name, space_id, delivery_token, reference,
         root_url: root_url,
         locale: locale,
         auto_tick: false,
         initial_sync_interval: initial,
-        delta_sync_interval: delta
+        delta_sync_interval: delta,
+        invalidation_callbacks: invalidation_callbacks
       )
 
     assert %State{
@@ -68,7 +73,8 @@ defmodule CFSync.Store.StateTest do
              delta_sync_interval: ^delta,
              next_url: ^expected_url,
              next_url_type: :next_page,
-             auto_tick: false
+             auto_tick: false,
+             invalidation_callbacks: ^invalidation_callbacks
            } = s
   end
 
