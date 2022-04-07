@@ -122,11 +122,13 @@ defmodule CFSync do
   ## Options
   - `:locale` - The locale you want to fetch from Contentful. Defaults to `"en-US"`
   - `:root_url` - Default is `"https://cdn.contentful.com/"`
-  - `initial_sync_interval` - The server will wait for this interval between two page
+  - `:initial_sync_interval` - The server will wait for this interval between two page
   requests during initial sync. Defaults to 30 milliseconds.
-  - `delta_sync_interval` - The server will wait for this interval between two sync
+  - `:delta_sync_interval` - The server will wait for this interval between two sync
   requests. Defaults to 5000 milliseconds. You can use a shorter delay to get updates
   faster, but you will be rate limited by Contentful if you set it too short.
+  - `:invalidation_callbacks` - List of 0-arity anonymous functions that will
+  be called after each sync operation that actually adds, updates or deletes some entries.
 
   """
   @spec start_link(atom, String.t(), String.t(), keyword) :: :ignore | {:error, any} | {:ok, pid}
