@@ -92,6 +92,12 @@ defmodule CFSync.Store do
       end
     end
 
+    if deltas != [] do
+      for cb <- state.invalidation_callbacks do
+        cb.()
+      end
+    end
+
     state
   end
 

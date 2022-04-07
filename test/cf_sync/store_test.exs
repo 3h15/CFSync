@@ -355,4 +355,77 @@ defmodule CFSync.StoreTest do
              %Asset{id: "4-upsert-asset"}
            ] = Table.get_assets(name) |> Enum.sort_by(& &1.id)
   end
+
+  test "Server calls invalidation callbacks when needed", %{
+    name: name,
+    locale: locale,
+    start_server: start_server
+  } do
+    parent = self()
+
+    item = fn
+      Asset, id, type ->
+        %{
+          "sys" => %{"id" => id, "type" => type},
+          "fields" => %{
+            "title" => %{locale => ""},
+            "description" => %{locale => ""},
+            "file" => %{
+              locale => %{
+                "contentType" => "",
+                "fileName" => "",
+                "url" => "",
+                "details" => %{
+                  "image" => %{
+                    "width" => 0,
+                    "height" => 0
+                  },
+                  "size" => 0
+                }
+              }
+            }
+          }
+        }
+
+      Entry, id, type ->
+        %{
+          "sys" => %{
+            "id" => id,
+            "type" => type,
+            "revision" => 1,
+            "contentType" => %{"sys" => %{"id" => "page"}}
+          },
+          "fields" => %{}
+        }
+    end
+
+    invalidate_ref = make_ref()
+
+    invalidate = fn ->
+      send(parent, {invalidate_ref, :invalidation})
+    end
+
+    {pid, tick} = start_server.(auto_tick: false, invalidation_callbacks: [invalidate])
+    allow(FakeHTTPClient, self(), pid)
+
+    sync_with = fn items ->
+      ref = make_ref()
+
+      expect(FakeHTTPClient, :fetch, fn _url, _token ->
+        send(parent, {ref, :temp})
+        {:ok, %{"nextSyncUrl" => "", "items" => items}}
+      end)
+
+      tick.()
+      assert_receive {^ref, :temp}
+    end
+
+    # Add some items
+    sync_with.([item.(Entry, "1-upsert-entry", "Entry")])
+    assert_receive {^invalidate_ref, :invalidation}
+
+    #  Add some items should concat with previsou
+    sync_with.([])
+    refute_receive {^invalidate_ref, :invalidation}
+  end
 end
