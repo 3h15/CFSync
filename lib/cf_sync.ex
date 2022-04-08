@@ -25,7 +25,7 @@ defmodule CFSync do
 
   ## Basic usage
   ```
-  # Define your mappings, one per content-type
+  # Define your fields mappings, one per content-type
   defmodule MyApp.PageFields do
     @behaviour CFSync.Entry.Fields
     import CFSync.Entry.Extractors
@@ -42,8 +42,8 @@ defmodule CFSync do
     end
   end
 
-  # Setup your content-types in config.exs
-  config :cf_sync, :fields_modules, %{
+  # Define a mapping to map Contentful "contentType" ids to an atom name and a fields struct:
+  entries_mapping = %{
     # "page" key is the content_type ID as configured in Contentful
     "page" => %{
       content_type: :page,
@@ -61,7 +61,8 @@ defmodule CFSync do
     CFSync.start_link(
       MyApp.MyCFSync,
       "Your_contentful_space_id",
-      "Your_contentful_delivery_api_token"
+      "Your_contentful_delivery_api_token",
+      entries_mapping
     )
 
 
@@ -118,6 +119,7 @@ defmodule CFSync do
   in `from/1` to query entries.
   - `space_id` is your Contentful space's ID
   - `delivery_token` is your Contentful API token
+  - `content_types` is a map describing how to map Contentful entries to elixir structs. See module doc.
 
   ## Options
   - `:locale` - The locale you want to fetch from Contentful. Defaults to `"en-US"`
