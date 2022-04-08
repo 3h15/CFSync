@@ -41,7 +41,7 @@ defmodule CFSync.EntryTest do
     end
   end
 
-  test "It logs an error when content-type has no configuration" do
+  test "It logs an error when content-type mapping is missing" do
     locale = Faker.String.base64(2)
     content_types = CFSyncTest.Entries.mapping()
     content_type = "unknown-content-type-" <> Faker.String.base64()
@@ -60,11 +60,11 @@ defmodule CFSync.EntryTest do
              fields: nil
            } = result
 
-    assert log =~ "CFSync configuration error for content type \"#{content_type}\":"
-    assert log =~ "No configuration data."
+    assert log =~ "CFSync mapping error for content type \"#{content_type}\":"
+    assert log =~ "No mapping provided for this content type."
   end
 
-  test "It logs an error when content-type has invalid configuration map" do
+  test "It logs an error when content-type has invalid mapping parameters" do
     locale = Faker.String.base64(2)
     content_types = CFSyncTest.Entries.mapping()
     content_type = "contentTypeWithInvalidConfiguration"
@@ -86,11 +86,11 @@ defmodule CFSync.EntryTest do
              fields: nil
            } = result
 
-    assert log =~ "CFSync configuration error for content type \"#{content_type}\":"
-    assert log =~ "Invalid configuration data."
+    assert log =~ "CFSync mapping error for content type \"#{content_type}\":"
+    assert log =~ "Invalid mapping."
   end
 
-  test "It logs an error when module for content-type is not defined" do
+  test "It logs an error when module for content type is not defined" do
     locale = Faker.String.base64(2)
     content_types = CFSyncTest.Entries.mapping()
     content_type = "contentTypeWithUndefinedModule"
@@ -110,7 +110,7 @@ defmodule CFSync.EntryTest do
              fields: nil
            } = result
 
-    assert log =~ "CFSync configuration error for content type \"#{content_type}\":"
+    assert log =~ "CFSync mapping error for content type \"#{content_type}\":"
     assert log =~ "Undefined fields module: CFSyncTest.Fields.UndefinedModule"
   end
 

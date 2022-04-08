@@ -65,10 +65,10 @@ defmodule CFSync.Entry do
       {:ok, config}
     else
       {:error, :no_config_for_content_type} ->
-        error(content_type, "No configuration data.")
+        error(content_type, "No mapping provided for this content type.")
 
       {:error, :invalid_config} ->
-        error(content_type, "Invalid configuration data.")
+        error(content_type, "Invalid mapping.")
 
       {:error, :undefined_fields_module, mod} ->
         error(content_type, "Undefined fields module: #{inspect(mod)}.")
@@ -76,7 +76,7 @@ defmodule CFSync.Entry do
   end
 
   defp error(content_type, msg) do
-    Logger.error("CFSync configuration error for content type \"#{content_type}\":")
+    Logger.error("CFSync mapping error for content type \"#{content_type}\":")
     Logger.error(msg)
     :error
   end
