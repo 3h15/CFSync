@@ -131,13 +131,14 @@ defmodule CFSync do
   be called after each sync operation that actually adds, updates or deletes some entries.
 
   """
-  @spec start_link(atom, String.t(), String.t(), keyword) :: :ignore | {:error, any} | {:ok, pid}
-  def start_link(name, space_id, delivery_token, opts)
+  @spec start_link(atom, String.t(), String.t(), map, keyword) ::
+          :ignore | {:error, any} | {:ok, pid}
+  def start_link(name, space_id, delivery_token, content_types, opts)
       when is_atom(name) and
              is_binary(space_id) and
              is_binary(delivery_token) and
              is_list(opts),
-      do: Store.start_link(name, space_id, delivery_token, opts)
+      do: Store.start_link(name, space_id, delivery_token, content_types, opts)
 
   @doc """
   Get the CFSync store for `name`. Use the name your provided to `start_link/4`.

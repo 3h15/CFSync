@@ -10,6 +10,7 @@ defmodule CFSync.Store.StateTest do
       name: Faker.Util.format("%A%4a%A%3a") |> String.to_atom(),
       space_id: Faker.String.base64(),
       delivery_token: Faker.String.base64(),
+      content_types: CFSyncTest.Entries.mapping(),
       reference: make_ref()
     }
   end
@@ -18,15 +19,17 @@ defmodule CFSync.Store.StateTest do
     name: name,
     space_id: space_id,
     delivery_token: delivery_token,
+    content_types: content_types,
     reference: reference
   } do
-    s = State.new(name, space_id, delivery_token, reference)
+    s = State.new(name, space_id, delivery_token, content_types, reference)
 
     expected_url = "https://cdn.contentful.com/spaces/" <> space_id <> "/sync/?initial=true"
 
     assert %State{
              name: ^name,
              delivery_token: ^delivery_token,
+             content_types: ^content_types,
              locale: "en-US",
              table_reference: ^reference,
              initial_sync_interval: 30,
@@ -42,6 +45,7 @@ defmodule CFSync.Store.StateTest do
     name: name,
     space_id: space_id,
     delivery_token: delivery_token,
+    content_types: content_types,
     reference: reference
   } do
     root_url = Faker.Internet.url()
@@ -55,8 +59,9 @@ defmodule CFSync.Store.StateTest do
     invalidation_callbacks = [cb]
 
     s =
-      State.new(name, space_id, delivery_token, reference,
+      State.new(name, space_id, delivery_token, content_types, reference,
         root_url: root_url,
+        content_types: content_types,
         locale: locale,
         auto_tick: false,
         initial_sync_interval: initial,
@@ -67,6 +72,7 @@ defmodule CFSync.Store.StateTest do
     assert %State{
              name: ^name,
              delivery_token: ^delivery_token,
+             content_types: ^content_types,
              locale: ^locale,
              table_reference: ^reference,
              initial_sync_interval: ^initial,
@@ -82,9 +88,10 @@ defmodule CFSync.Store.StateTest do
     name: name,
     space_id: space_id,
     delivery_token: delivery_token,
+    content_types: content_types,
     reference: reference
   } do
-    s = State.new(name, space_id, delivery_token, reference)
+    s = State.new(name, space_id, delivery_token, content_types, reference)
 
     assert s.next_url == "https://cdn.contentful.com/spaces/" <> space_id <> "/sync/?initial=true"
     assert s.next_url_type == :next_page

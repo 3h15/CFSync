@@ -22,8 +22,10 @@ defmodule CFSyncTest.Integration.CFSyncTest do
 
     space_id = "diw11gmz6opc"
     token = "unC_qLLrGg1iSOK1mHU0IUenA-Ji3deWGjp3H8VRSQA"
+    content_types = CFSyncTest.Entries.mapping()
 
-    {:ok, pid} = start_link(IntegrationTestServer, space_id, token, auto_tick: false)
+    {:ok, pid} =
+      start_link(IntegrationTestServer, space_id, token, content_types, auto_tick: false)
 
     allow(FakeHTTPoison, self(), pid)
     allow(FakeHTTPClient, self(), pid)

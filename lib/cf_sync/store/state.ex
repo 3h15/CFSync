@@ -9,6 +9,7 @@ defmodule CFSync.Store.State do
   defstruct([
     :name,
     :delivery_token,
+    :content_types,
     :locale,
     :table_reference,
     :initial_sync_interval,
@@ -20,20 +21,21 @@ defmodule CFSync.Store.State do
   ])
 
   @type t() :: %__MODULE__{
-          name: atom(),
+          name: atom,
           delivery_token: binary,
-          locale: binary(),
+          content_types: map,
+          locale: binary,
           table_reference: :ets.tid(),
-          initial_sync_interval: integer(),
-          delta_sync_interval: integer(),
-          next_url: nil | binary(),
+          initial_sync_interval: integer,
+          delta_sync_interval: integer,
+          next_url: nil | binary,
           next_url_type: :next_page | :next_sync,
-          auto_tick: boolean(),
-          invalidation_callbacks: [function()]
+          auto_tick: boolean,
+          invalidation_callbacks: [function]
         }
 
-  @spec new(atom, binary, binary, :ets.tid(), keyword) :: CFSync.Store.State.t()
-  def new(name, space_id, delivery_token, table_reference, opts \\ []) do
+  @spec new(atom, binary, binary, map, :ets.tid(), keyword) :: CFSync.Store.State.t()
+  def new(name, space_id, delivery_token, content_types, table_reference, opts \\ []) do
     root_url = Keyword.get(opts, :root_url, @default_root_url)
     locale = Keyword.get(opts, :locale, @default_locale)
 
@@ -48,6 +50,7 @@ defmodule CFSync.Store.State do
     %__MODULE__{
       name: name,
       delivery_token: delivery_token,
+      content_types: content_types,
       locale: locale,
       table_reference: table_reference,
       initial_sync_interval: initial_sync_interval,

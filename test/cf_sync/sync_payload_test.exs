@@ -9,6 +9,7 @@ defmodule CFSync.SyncPayloadTest do
 
   test "new/2 creates a valid struct with next page URL" do
     locale = Faker.String.base64(2)
+    content_types = CFSyncTest.Entries.mapping()
     url = Faker.String.base64(20)
 
     data = %{
@@ -16,11 +17,13 @@ defmodule CFSync.SyncPayloadTest do
       "items" => []
     }
 
-    assert %SyncPayload{next_url: ^url, next_url_type: :next_page} = SyncPayload.new(data, locale)
+    assert %SyncPayload{next_url: ^url, next_url_type: :next_page} =
+             SyncPayload.new(data, content_types, locale)
   end
 
   test "new/2 creates a valid struct with next sync URL" do
     locale = Faker.String.base64(2)
+    content_types = CFSyncTest.Entries.mapping()
     url = Faker.String.base64(20)
 
     data = %{
@@ -28,11 +31,13 @@ defmodule CFSync.SyncPayloadTest do
       "items" => []
     }
 
-    assert %SyncPayload{next_url: ^url, next_url_type: :next_sync} = SyncPayload.new(data, locale)
+    assert %SyncPayload{next_url: ^url, next_url_type: :next_sync} =
+             SyncPayload.new(data, content_types, locale)
   end
 
   test "new/2 correctly dispatches deltas" do
     locale = Faker.String.base64(2)
+    content_types = CFSyncTest.Entries.mapping()
 
     item = fn
       Asset, id, type ->
@@ -82,7 +87,7 @@ defmodule CFSync.SyncPayloadTest do
       ]
     }
 
-    %SyncPayload{deltas: deltas} = SyncPayload.new(data, locale)
+    %SyncPayload{deltas: deltas} = SyncPayload.new(data, content_types, locale)
 
     assert length(deltas) == 6
 

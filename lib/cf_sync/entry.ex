@@ -9,8 +9,6 @@ defmodule CFSync.Entry do
 
   alias CFSync.Entry.Fields
 
-  @content_types Application.get_env(:cf_sync, :content_types, %{})
-
   @enforce_keys [:id, :revision, :content_type, :fields]
   defstruct [:id, :revision, :content_type, :fields]
 
@@ -22,7 +20,7 @@ defmodule CFSync.Entry do
         }
 
   @doc false
-  @spec new(map, binary) :: t()
+  @spec new(map, map, binary) :: t()
   def new(
         %{
           "sys" => %{
@@ -37,9 +35,10 @@ defmodule CFSync.Entry do
           },
           "fields" => fields
         },
+        content_types,
         locale
       ) do
-    case get_config_for_content_type(content_type) do
+    case get_config_for_content_type(content_types, content_type) do
       {:ok, config} ->
         fields = config.fields_module.new({fields, locale})
 
@@ -60,8 +59,8 @@ defmodule CFSync.Entry do
     end
   end
 
-  defp get_config_for_content_type(content_type) when is_binary(content_type) do
-    with {:ok, config} <- fetch_config_for_content_type(content_type),
+  defp get_config_for_content_type(content_types, content_type) when is_binary(content_type) do
+    with {:ok, config} <- fetch_config_for_content_type(content_types, content_type),
          :ok <- validate_config(config) do
       {:ok, config}
     else
@@ -82,8 +81,8 @@ defmodule CFSync.Entry do
     :error
   end
 
-  defp fetch_config_for_content_type(content_type) do
-    case Map.fetch(@content_types, content_type) do
+  defp fetch_config_for_content_type(content_types, content_type) do
+    case Map.fetch(content_types, content_type) do
       {:ok, config} -> {:ok, config}
       _ -> {:error, :no_config_for_content_type}
     end

@@ -21,13 +21,14 @@ defmodule CFSync.StoreTest do
     name = Faker.Util.format("%A%4a%A%3a") |> String.to_atom()
     space_id = Faker.String.base64()
     token = Faker.String.base64()
+    content_types = CFSyncTest.Entries.mapping()
     locale = Faker.String.base64(2)
 
     start_server = fn opts ->
       name = Keyword.get(opts, :name, name)
       opts = opts ++ [locale: locale]
       opts = Enum.uniq_by(opts, fn {k, _v} -> k end)
-      {:ok, pid} = Store.start_link(name, space_id, token, opts)
+      {:ok, pid} = Store.start_link(name, space_id, token, content_types, opts)
 
       tick = fn ->
         send(pid, :sync)
@@ -357,7 +358,6 @@ defmodule CFSync.StoreTest do
   end
 
   test "Server calls invalidation callbacks when needed", %{
-    name: name,
     locale: locale,
     start_server: start_server
   } do

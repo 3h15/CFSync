@@ -21,12 +21,13 @@ defmodule CFSync.Store do
   # before first request. Do not lower it too much to avoid make tests brittle.
   @delay_before_start 10
 
-  @spec start_link(atom, binary, binary, keyword) :: :ignore | {:error, any} | {:ok, pid}
-  def start_link(name, space_id, delivery_token, opts \\ []) do
+  @spec start_link(atom, binary, binary, map, keyword) :: :ignore | {:error, any} | {:ok, pid}
+  def start_link(name, space_id, delivery_token, content_types, opts \\ []) do
     init_args = [
       {:name, name},
       {:space_id, space_id},
-      {:delivery_token, delivery_token} | opts
+      {:delivery_token, delivery_token},
+      {:content_types, content_types} | opts
     ]
 
     GenServer.start_link(__MODULE__, init_args, name: name)
@@ -38,22 +39,27 @@ defmodule CFSync.Store do
     name = Keyword.fetch!(init_args, :name)
     space_id = Keyword.fetch!(init_args, :space_id)
     delivery_token = Keyword.fetch!(init_args, :delivery_token)
+    content_types = Keyword.fetch!(init_args, :content_types)
     table_reference = Table.new(name)
 
     state =
       name
-      |> State.new(space_id, delivery_token, table_reference, init_args)
+      |> State.new(space_id, delivery_token, content_types, table_reference, init_args)
       |> schedule_tick(@delay_before_start)
 
     {:ok, state}
   end
 
   @impl true
-  def handle_info(:sync, %State{next_url: url, delivery_token: token, locale: locale} = state) do
+  def handle_info(
+        :sync,
+        %State{next_url: url, delivery_token: token, content_types: content_types, locale: locale} =
+          state
+      ) do
     case(@http_client_module.fetch(url, token)) do
       {:ok, data} ->
         # We got a response, handle it
-        payload = SyncPayload.new(data, locale)
+        payload = SyncPayload.new(data, content_types, locale)
 
         {:noreply,
          state
