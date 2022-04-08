@@ -9,7 +9,7 @@ defmodule CFSync.Entry do
 
   alias CFSync.Entry.Fields
 
-  @content_types Application.compile_env(:cf_sync, :content_types, %{})
+  @content_types Application.get_env(:cf_sync, :content_types, %{})
 
   @enforce_keys [:id, :revision, :content_type, :fields]
   defstruct [:id, :revision, :content_type, :fields]
