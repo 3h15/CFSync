@@ -4,7 +4,7 @@ defmodule CFSync.MixProject do
   def project do
     [
       app: :cf_sync,
-      version: "0.4.0",
+      version: "0.5.0",
       elixir: "~> 1.13",
       name: "CFSync",
       description: description(),
@@ -46,7 +46,7 @@ defmodule CFSync.MixProject do
       {:jason, "~> 1.2"},
       {:mox, "~> 1.0", only: :test},
       {:phoenix_html, "~> 3.2"},
-      {:phoenix_live_view, "~> 0.17.9"}
+      {:phoenix_live_view, "~> 0.17.0"}
     ]
   end
 

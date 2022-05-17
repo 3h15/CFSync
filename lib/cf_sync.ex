@@ -209,4 +209,18 @@ defmodule CFSync do
   @spec get_link_target(store(), Link.t()) :: nil | Entry.t() | Asset.t()
   def get_link_target(store, %Link{} = link) when not is_atom(store),
     do: Store.Table.get_link_target(store, link)
+
+  @doc """
+  Phoenix.Component that renders RichText.
+
+  You can pass these assigns:
+  content: the %RichText{} struct to render
+  class: a class attribute that will be added to root element of rendered HTML
+  delegate: a module with custom components to use for rendering
+
+  Delegate and class are optional.
+  To use delegate module, see RichTextRenderer and RichTextRendererTest modules
+  """
+  @spec rich_text(map) :: Phoenix.LiveView.Rendered.t()
+  def rich_text(assigns), do: CFSync.RichTextRenderer.render(assigns)
 end
