@@ -8,6 +8,7 @@ defmodule CFSync.Asset do
   @enforce_keys [
     :id,
     :content_type,
+    :space_id,
     :title,
     :description,
     :file_name,
@@ -16,11 +17,23 @@ defmodule CFSync.Asset do
     :height,
     :size
   ]
-  defstruct [:id, :content_type, :title, :description, :file_name, :url, :width, :height, :size]
+  defstruct [
+    :id,
+    :content_type,
+    :space_id,
+    :title,
+    :description,
+    :file_name,
+    :url,
+    :width,
+    :height,
+    :size
+  ]
 
   @type t :: %__MODULE__{
           id: binary(),
           content_type: binary(),
+          space_id: binary(),
           title: binary(),
           description: binary(),
           file_name: binary(),
@@ -36,7 +49,12 @@ defmodule CFSync.Asset do
         %{
           "sys" => %{
             "id" => id,
-            "type" => "Asset"
+            "type" => "Asset",
+            "space" => %{
+              "sys" => %{
+                "id" => space_id
+              }
+            }
           },
           "fields" => fields
         },
@@ -53,6 +71,7 @@ defmodule CFSync.Asset do
 
     %__MODULE__{
       id: id,
+      space_id: space_id,
       content_type: content_type,
       title: title,
       description: description,

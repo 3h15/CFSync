@@ -195,7 +195,7 @@ defmodule CFSync.StoreTest do
     item = fn
       Asset, id, type ->
         %{
-          "sys" => %{"id" => id, "type" => type},
+          "sys" => %{"id" => id, "type" => type, "space" => %{"sys" => %{"id" => "anyspace"}}},
           "fields" => %{
             "title" => %{locale => ""},
             "description" => %{locale => ""},
@@ -367,7 +367,7 @@ defmodule CFSync.StoreTest do
     item = fn
       Asset, id, type ->
         %{
-          "sys" => %{"id" => id, "type" => type},
+          "sys" => %{"id" => id, "type" => type, "space" => %{"sys" => %{"id" => "anyspace"}}},
           "fields" => %{
             "title" => %{locale => ""},
             "description" => %{locale => ""},

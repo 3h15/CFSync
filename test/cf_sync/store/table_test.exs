@@ -140,6 +140,7 @@ defmodule CFSync.Store.TableTest do
   defp create_asset() do
     %Asset{
       id: Faker.String.base64(10),
+      space_id: Faker.String.base64(10),
       content_type: Faker.String.base64(10),
       title: Faker.String.base64(10),
       description: Faker.String.base64(10),
