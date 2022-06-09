@@ -75,6 +75,7 @@ defmodule CFSync do
     %CFSync.Entry{
       id: "entry_id",
       content_type: :page,
+      space_id: "your_space_id",
       fields: %MyApp.PageFields{
         name: "Lorem ipsum",
         body: %CFSync.RichText{ #... },
