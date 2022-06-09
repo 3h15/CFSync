@@ -69,7 +69,8 @@ defmodule CFSync.SyncPayloadTest do
             "id" => id,
             "type" => type,
             "revision" => 1,
-            "contentType" => %{"sys" => %{"id" => "page"}}
+            "contentType" => %{"sys" => %{"id" => "page"}},
+            "space" => %{"sys" => %{"id" => "anyspace"}}
           },
           "fields" => %{}
         }

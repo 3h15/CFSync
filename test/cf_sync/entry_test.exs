@@ -17,12 +17,14 @@ defmodule CFSync.EntryTest do
     assert %Entry{
              id: id,
              revision: revision,
+             space_id: space_id,
              content_type: :page,
              fields: %Page{name: ^name}
            } = Entry.new(data, content_types, locale)
 
     assert id == data["sys"]["id"]
     assert revision == data["sys"]["revision"]
+    assert space_id == data["sys"]["space"]["sys"]["id"]
   end
 
   test "It fetches content_type atom from config" do
@@ -116,6 +118,7 @@ defmodule CFSync.EntryTest do
 
   defp entry_payload(opts) do
     id = Keyword.get(opts, :id, Faker.String.base64(10))
+    space_id = Keyword.get(opts, :space_id, Faker.String.base64(10))
     revision = Keyword.get(opts, :revision, Faker.random_between(1, 1000))
     content_type = Keyword.get(opts, :content_type, "page")
     fields = Keyword.get(opts, :fields, %{})
@@ -128,6 +131,11 @@ defmodule CFSync.EntryTest do
         "contentType" => %{
           "sys" => %{
             "id" => content_type
+          }
+        },
+        "space" => %{
+          "sys" => %{
+            "id" => space_id
           }
         }
       },

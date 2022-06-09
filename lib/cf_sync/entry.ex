@@ -9,12 +9,13 @@ defmodule CFSync.Entry do
 
   alias CFSync.Entry.Fields
 
-  @enforce_keys [:id, :revision, :content_type, :fields]
-  defstruct [:id, :revision, :content_type, :fields]
+  @enforce_keys [:id, :revision, :space_id, :content_type, :fields]
+  defstruct [:id, :revision, :space_id, :content_type, :fields]
 
   @type t :: %__MODULE__{
           id: binary(),
           revision: integer(),
+          space_id: binary(),
           content_type: atom(),
           fields: Fields.t()
         }
@@ -31,6 +32,11 @@ defmodule CFSync.Entry do
               "sys" => %{
                 "id" => content_type
               }
+            },
+            "space" => %{
+              "sys" => %{
+                "id" => space_id
+              }
             }
           },
           "fields" => fields
@@ -45,6 +51,7 @@ defmodule CFSync.Entry do
         %__MODULE__{
           id: id,
           revision: revision,
+          space_id: space_id,
           content_type: config.content_type,
           fields: fields
         }
@@ -53,6 +60,7 @@ defmodule CFSync.Entry do
         %__MODULE__{
           id: id,
           revision: revision,
+          space_id: space_id,
           content_type: :unknown,
           fields: nil
         }
