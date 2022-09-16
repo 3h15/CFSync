@@ -208,6 +208,21 @@ defmodule CFSync.Entry.Extractors do
     end
   end
 
+  @doc """
+  Returns value of `field_name` processed by `fun`.
+
+  - `data` is the entry's payload as provided to `c:CFSync.Entry.Fields.new/1`
+  - `field_name` is the field's id in Contentful (ie. What is configured in Contentful app)
+  - `fun` is a function of arity 1
+
+  Returns `nil` if the field is not included in the payload.
+  """
+  @spec extract_custom(data(), String.t(), (any() -> any())) :: any()
+  def extract_custom({data, locale} = _data, field_name, fun) do
+    v = extract(data, field_name, locale)
+    fun.(v)
+  end
+
   defp extract(data, field, locale) do
     data[field][locale]
   end

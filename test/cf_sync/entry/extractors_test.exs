@@ -330,4 +330,30 @@ defmodule CFSync.Entry.ExtractorsTest do
                default_value
     end
   end
+
+  test "extract_custom/3 returns processed value when value, name and fun are valid", %{
+    build: build
+  } do
+    value = Faker.String.base64(8)
+    fun = fn v -> {:processed, v} end
+
+    {name, locale, expected_value, data} =
+      build.(fn ->
+        {value, {:processed, value}}
+      end)
+
+    assert Extractors.extract_custom({data, locale}, name, fun) == expected_value
+  end
+
+  test "extract_custom/3 passes nil to fun when name is invalid", %{
+    build: build
+  } do
+    value = Faker.String.base64(8)
+    fun = fn v -> {:processed, v} end
+
+    {name, locale, _expected_value, data} = build.(fn -> value end)
+
+    invalid_name = "err_" <> name
+    assert Extractors.extract_custom({data, locale}, invalid_name, fun) == {:processed, nil}
+  end
 end
