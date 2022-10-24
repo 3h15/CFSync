@@ -54,6 +54,14 @@ defmodule CFSync.RichTextRenderer do
     end
   end
 
+  defp rt_text_switch(assigns) do
+    if assigns.delegate && function_exported?(assigns.delegate, :text_content, 1) do
+      apply(assigns.delegate, :text_content, [assigns])
+    else
+      assigns.node.value
+    end
+  end
+
   defp bold(assigns) do
     ~H"<b><%= render_slot @inner_block %></b>"
   end
@@ -71,7 +79,7 @@ defmodule CFSync.RichTextRenderer do
   end
 
   defp rt_node(%{node: %{type: :text}} = assigns) do
-    for mark <- assigns.node.marks, reduce: ~H"<%= raw @node.value %>" do
+    for mark <- assigns.node.marks, reduce: ~H"<%= raw rt_text_switch(assigns) %>" do
       acc ->
         %{
           assigns

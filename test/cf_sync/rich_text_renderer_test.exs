@@ -264,7 +264,7 @@ defmodule CFSync.RichTextRendererTest do
           }
         ]
       },
-      ~s(<p class="custom">inner</p>),
+      ~s(<p class="custom">INNER</p>),
       __MODULE__
     )
   end
@@ -285,7 +285,7 @@ defmodule CFSync.RichTextRendererTest do
           }
         ]
       },
-      ~s(<p class="custom"><blockquote class="cutom_bl\">inner</blockquote></p>),
+      ~s(<p class="custom"><blockquote class="cutom_bl\">INNER</blockquote></p>),
       __MODULE__,
       %{blockquote_class: "cutom_bl"}
     )
@@ -301,6 +301,10 @@ defmodule CFSync.RichTextRendererTest do
     ~H"""
     <blockquote class={@blockquote_class}><%= render_slot @inner_block %></blockquote>
     """
+  end
+
+  def text_content(assigns) do
+    String.upcase(assigns.node.value)
   end
 
   defp assert_renders(rich_text, expected_html, delegate \\ nil, extra_assigns \\ %{}) do
