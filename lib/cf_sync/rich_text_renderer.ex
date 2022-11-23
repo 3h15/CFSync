@@ -79,6 +79,8 @@ defmodule CFSync.RichTextRenderer do
   end
 
   defp rt_node(%{node: %{type: :text}} = assigns) do
+    alias Phoenix.LiveView.HTMLEngine
+
     for mark <- assigns.node.marks, reduce: ~H"<%= raw rt_text_switch(assigns) %>" do
       acc ->
         %{
@@ -86,7 +88,7 @@ defmodule CFSync.RichTextRenderer do
           | inner_block: [
               %{
                 __slot__: :inner_block,
-                inner_block: inner_block(:inner_block, do: acc)
+                inner_block: HTMLEngine.inner_block(:inner_block, do: acc)
               }
             ]
         }
@@ -196,11 +198,11 @@ defmodule CFSync.RichTextRenderer do
     """
   end
 
-  defp rt_node(%{node: %{type: unimplemented_type}} = assigns) do
+  defp rt_node(%{node: %{type: _unimplemented_type}} = assigns) do
     ~H"""
     <div style="border: 2px solid red;">
       <div style="background-color: red; color: white; font-weight: bold; padding: .25rem;">
-        Missing component for <%= unimplemented_type %>
+        Missing component for <%= @node.type %>
       </div>
       <div><%= render_slot @inner_block %></div>
     </div>
