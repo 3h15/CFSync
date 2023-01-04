@@ -50,6 +50,11 @@ defmodule CFSync.Store do
     {:ok, state}
   end
 
+  @spec force_sync(atom) :: :ok
+  def force_sync(name) do
+    GenServer.cast(name, :force_sync)
+  end
+
   @impl true
   def handle_info(
         :sync,
@@ -81,6 +86,10 @@ defmodule CFSync.Store do
     end
   end
 
+  def handle_cast(:force_sync, %State{} = state) do
+    {:noreply, force_tick(state)}
+  end
+
   defp update_url(s, %SyncPayload{next_url_type: :next_page, next_url: url} = _payload) do
     State.update(s, url, :next_page)
   end
@@ -109,10 +118,11 @@ defmodule CFSync.Store do
 
   defp schedule_tick(state, delay) do
     if state.auto_tick do
-      Process.send_after(self(), :sync, delay)
+      timer = Process.send_after(self(), :sync, delay)
+      %State{state | current_timer: timer}
+    else
+      state
     end
-
-    state
   end
 
   defp schedule_next_tick(%State{next_url_type: :next_page} = state),
@@ -124,5 +134,18 @@ defmodule CFSync.Store do
   defp schedule_next_tick(state, delay) do
     state
     |> schedule_tick(delay)
+  end
+
+  # Do not force tick during init
+  defp force_tick(%State{next_url_type: :next_page} = state), do: state
+
+  defp force_tick(state) do
+    if Process.cancel_timer(state.current_timer) do
+      schedule_tick(state, 0)
+    else
+      # Timer was not found, it means it is expired and the process has a 
+      # tick message waiting in the inbox. Let the process continue to that tick. 
+      state
+    end
   end
 end

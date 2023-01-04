@@ -430,4 +430,52 @@ defmodule CFSync.StoreTest do
     sync_with.([])
     refute_receive {^invalidate_ref, :invalidation}
   end
+
+  test "Server correctly handles force_sync", %{
+    name: name,
+    space_id: space_id,
+    token: token,
+    start_server: start_server
+  } do
+    parent = self()
+
+    next_sync_with = fn expected_url, ref, next_url, next_url_key ->
+      expect(FakeHTTPClient, :fetch, fn url, tok ->
+        assert url == expected_url
+        assert token == tok
+
+        send(parent, {ref, :temp})
+
+        {:ok, %{next_url_key => next_url, "items" => []}}
+      end)
+    end
+
+    {pid, _tick} = start_server.(initial_sync_interval: 10, delta_sync_interval: 10)
+    allow(FakeHTTPClient, self(), pid)
+
+    # Step 1, next sync
+    step_ref_1 = make_ref()
+    url_1 = Faker.Internet.url()
+
+    initial_url = "https://cdn.contentful.com/spaces/#{space_id}/sync/?initial=true"
+    next_sync_with.(initial_url, step_ref_1, url_1, "nextSyncUrl")
+
+    assert_receive {^step_ref_1, :temp}, 15
+
+    # Step 2, force sync
+    step_ref_2 = make_ref()
+    url_2 = Faker.Internet.url()
+
+    next_sync_with.(url_1, step_ref_2, url_2, "nextSyncUrl")
+    CFSync.force_sync(name)
+    assert_receive {^step_ref_2, :temp}, 2
+
+    # Step 3, next sync
+    step_ref_3 = make_ref()
+    url_3 = Faker.Internet.url()
+    next_sync_with.(url_2, step_ref_3, url_3, "nextSyncUrl")
+
+    refute_receive {^step_ref_3, :temp}, 7
+    assert_receive {^step_ref_3, :temp}, 4
+  end
 end

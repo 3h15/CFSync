@@ -144,7 +144,28 @@ defmodule CFSync do
       do: Store.start_link(name, space_id, delivery_token, content_types, opts)
 
   @doc """
-  Get the CFSync store for `name`. Use the name your provided to `start_link/4`.
+  Forces the store for `name` to sync immediately. Use the name you provided to `start_link/4`.
+
+  CFSync regularly synces entries from Contentful API (see `start_link/4`).
+  Calling this function triggers an immediate sync and resets the timer for the 
+  next regular sync, so it will only happen after the full delay (`:delta_sync_interval`)
+  counting from the immediate sync.
+
+  You can use Contentful `publish` and `unpublish`
+  [webhooks](https://www.contentful.com/developers/docs/concepts/webhooks/)
+  to trigger calls to this function in order to achieve almost instant
+  synchronisation. You can then relax `:delta_sync_interval` in the configuration
+  to lower the number of API requests made to Contentful. 
+
+  ```
+  CFSync.force_sync(MyApp.MyCFSync)
+  ```
+  """
+  @spec force_sync(atom) :: :ok
+  def force_sync(name), do: Store.force_sync(name)
+
+  @doc """
+  Get the CFSync store for `name`. Use the name you provided to `start_link/4`.
 
   ```
   store = CFSync.from(MyApp.MyCFSync)
