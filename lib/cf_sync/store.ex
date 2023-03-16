@@ -50,11 +50,6 @@ defmodule CFSync.Store do
     {:ok, state}
   end
 
-  @spec force_sync(atom) :: :ok
-  def force_sync(name) do
-    GenServer.cast(name, :force_sync)
-  end
-
   @impl true
   def handle_info(
         :sync,
@@ -86,8 +81,14 @@ defmodule CFSync.Store do
     end
   end
 
+  @impl true
   def handle_cast(:force_sync, %State{} = state) do
     {:noreply, force_tick(state)}
+  end
+
+  @spec force_sync(atom) :: :ok
+  def force_sync(name) do
+    GenServer.cast(name, :force_sync)
   end
 
   defp update_url(s, %SyncPayload{next_url_type: :next_page, next_url: url} = _payload) do
