@@ -27,7 +27,7 @@ defmodule Mix.Tasks.CfSync.Setup do
         {:ok, data} ->
           warn("Current config data for \"#{name}\":")
           IO.puts("########## START CONFIG ##########")
-          IO.puts(inspect(data))
+          IO.puts(inspect(data, pretty: true, width: 0))
           IO.puts("########### END CONFIG ###########")
 
           overwrite =
