@@ -42,9 +42,9 @@ defmodule CFSync.MixProject do
       {:ex_doc, "~> 0.27", only: :dev, runtime: false},
       {:excoveralls, "~> 0.14.4", only: :test},
       {:faker, "~> 0.17", only: :test},
-      {:httpoison, "~> 1.7"},
+      {:httpoison, "~> 2.1"},
       {:inflex, "~> 2.1"},
-      {:jason, "~> 1.2"},
+      {:jason, "~> 1.4"},
       {:mox, "~> 1.0", only: :test},
       {:phoenix_html, "~> 3.2"},
       {:phoenix_live_view, "~> 0.18.0"}

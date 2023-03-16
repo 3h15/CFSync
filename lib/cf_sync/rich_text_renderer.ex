@@ -79,7 +79,7 @@ defmodule CFSync.RichTextRenderer do
   end
 
   defp rt_node(%{node: %{type: :text}} = assigns) do
-    alias Phoenix.LiveView.HTMLEngine
+    alias Phoenix.LiveView.TagEngine
 
     for mark <- assigns.node.marks, reduce: ~H"<%= raw rt_text_switch(assigns) %>" do
       acc ->
@@ -88,7 +88,7 @@ defmodule CFSync.RichTextRenderer do
           | inner_block: [
               %{
                 __slot__: :inner_block,
-                inner_block: HTMLEngine.inner_block(:inner_block, do: acc)
+                inner_block: TagEngine.inner_block(:inner_block, do: acc)
               }
             ]
         }
