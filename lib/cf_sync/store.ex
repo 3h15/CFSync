@@ -37,15 +37,35 @@ defmodule CFSync.Store do
   @spec init(keyword) :: {:ok, State.t()}
   def init(init_args) do
     name = Keyword.fetch!(init_args, :name)
-    space_id = Keyword.fetch!(init_args, :space_id)
-    delivery_token = Keyword.fetch!(init_args, :delivery_token)
     content_types = Keyword.fetch!(init_args, :content_types)
     table_reference = Table.new(name)
 
     state =
-      name
-      |> State.new(space_id, delivery_token, content_types, table_reference, init_args)
-      |> schedule_tick(@delay_before_start)
+      case Keyword.get(init_args, :use_dump_file) do
+        dump when dump == true or is_binary(dump) ->
+          State.new_from_dump(
+            name,
+            dump,
+            content_types,
+            table_reference,
+            init_args
+          )
+
+        _ ->
+          space_id = Keyword.fetch!(init_args, :space_id)
+          delivery_token = Keyword.fetch!(init_args, :delivery_token)
+
+          State.new(
+            name,
+            space_id,
+            delivery_token,
+            content_types,
+            table_reference,
+            init_args
+          )
+      end
+
+    state = schedule_tick(state, @delay_before_start)
 
     {:ok, state}
   end
@@ -53,8 +73,13 @@ defmodule CFSync.Store do
   @impl true
   def handle_info(
         :sync,
-        %State{next_url: url, delivery_token: token, content_types: content_types, locale: locale} =
-          state
+        %State{
+          next_url: url,
+          delivery_token: token,
+          content_types: content_types,
+          locale: locale,
+          dump_name: nil
+        } = state
       ) do
     case(@http_client_module.fetch(url, token)) do
       {:ok, data} ->
@@ -79,6 +104,29 @@ defmodule CFSync.Store do
         Logger.error("Sync request error, exiting.")
         {:stop, :normal, nil}
     end
+  end
+
+  def handle_info(
+        :sync,
+        %State{
+          dump_name: dump_name,
+          content_types: content_types,
+          locale: locale
+        } = state
+      ) do
+    state =
+      case CfSync.Tasks.Utils.read_dump(dump_name) do
+        {:ok, pages} ->
+          Enum.reduce(pages, state, fn page, state ->
+            payload = SyncPayload.new(page, content_types, locale)
+            update_table(state, payload)
+          end)
+
+        _ ->
+          raise "Unable to read CFSync dump file \"#{dump_name}\""
+      end
+
+    {:noreply, state}
   end
 
   @impl true

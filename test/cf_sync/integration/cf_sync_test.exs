@@ -158,6 +158,54 @@ defmodule CFSyncTest.Integration.CFSyncTest do
            ] = stars
   end
 
+  test "Integration - dump file" do
+    content_types = CFSyncTest.Entries.mapping()
+
+    {:ok, _pid} = start_link(IntegrationTestServer, "", "", content_types, use_dump_file: true)
+
+    store = from(IntegrationTestServer)
+
+    wait_for(fn -> length(get_entries(store)) > 0 end)
+
+    page = get_entry(store, "ygP74CyESVFcDpJojH0tT")
+    one = get_asset(store, "5m9oC9bksUxeHqVZXuWk8V")
+
+    assert %Entry{
+             content_type: :page,
+             fields: %{
+               name: "Your page",
+               boolean: true,
+               integer: 1,
+               decimal: 1.2,
+               date: nil,
+               datetime: nil,
+               one_asset: %Link{id: "2pGP9VWr9d2M83TecIJzY0"},
+               many_assets: [
+                 %Link{id: "2pGP9VWr9d2M83TecIJzY0"},
+                 %Link{id: "NYNi7JZ7Rp2PnbQgjydEV"}
+               ],
+               one_link: %Link{id: "6MQquyPNj1ccczUYRzM7Ky"},
+               many_links: [
+                 %Link{id: "18vvU4uLfjZA409cWC7BJu"}
+               ]
+               #  location: "",
+               #  json: "",
+             }
+           } = page
+
+    assert %Asset{
+             title: "One",
+             description: "",
+             content_type: "image/jpeg",
+             file_name: "one.jpg",
+             url:
+               "//images.ctfassets.net/diw11gmz6opc/5m9oC9bksUxeHqVZXuWk8V/852c68b98e8e5383ade431cb8dbef27f/one.jpg",
+             width: 10_235,
+             height: 8708,
+             size: 6_568_275
+           } = one
+  end
+
   defp tick(pid) do
     send(pid, :sync)
   end

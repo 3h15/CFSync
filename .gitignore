@@ -24,4 +24,3 @@ cf_sync-*.tar
 
 # Temporary files, for example, from tests.
 /tmp/
-/.cf_sync

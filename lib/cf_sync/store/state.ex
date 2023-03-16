@@ -18,7 +18,8 @@ defmodule CFSync.Store.State do
     :next_url,
     next_url_type: :next_page,
     auto_tick: true,
-    invalidation_callbacks: []
+    invalidation_callbacks: [],
+    dump_name: nil
   ])
 
   @type t() :: %__MODULE__{
@@ -33,7 +34,8 @@ defmodule CFSync.Store.State do
           next_url: nil | binary,
           next_url_type: :next_page | :next_sync,
           auto_tick: boolean,
-          invalidation_callbacks: [function]
+          invalidation_callbacks: [function],
+          dump_name: binary | nil
         }
 
   @spec new(atom, binary, binary, map, :ets.tid(), keyword) :: CFSync.Store.State.t()
@@ -61,6 +63,28 @@ defmodule CFSync.Store.State do
       next_url: initial_url(root_url, space_id),
       auto_tick: auto_tick,
       invalidation_callbacks: invalidation_callbacks
+    }
+  end
+
+  @spec new_from_dump(atom, true | binary, map, :ets.tid(), keyword) :: CFSync.Store.State.t()
+  def new_from_dump(name, dump, content_types, table_reference, opts \\ []) do
+    locale = Keyword.get(opts, :locale, @default_locale)
+
+    dump_name = if dump == true, do: "default", else: dump
+
+    %__MODULE__{
+      name: name,
+      delivery_token: "",
+      content_types: content_types,
+      locale: locale,
+      current_timer: nil,
+      table_reference: table_reference,
+      initial_sync_interval: 0,
+      delta_sync_interval: 0,
+      next_url: "",
+      auto_tick: true,
+      invalidation_callbacks: [],
+      dump_name: dump_name
     }
   end
 

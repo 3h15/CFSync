@@ -38,7 +38,8 @@ defmodule Mix.Tasks.CfSync.Dump do
     url = initial_url(config.root_url, config.space_id)
 
     pages =
-      Stream.iterate(url, &fetch_next(&1, config.delivery_token))
+      fetch(url, config.delivery_token)
+      |> Stream.iterate(&fetch_next(&1, config.delivery_token))
       |> Stream.take_while(&(&1 != nil))
       |> Stream.each(fn _ -> IO.write(".") end)
       |> Enum.to_list()
