@@ -26,12 +26,12 @@ defmodule Mix.Tasks.CfSync.Dump do
     end
   end
 
-  def dump(name, config) do
+  defp dump(name, config) do
     data = fetch_all(config)
     write_dump!(name, data)
   end
 
-  def fetch_all(config) do
+  defp fetch_all(config) do
     HTTPoison.start()
     IO.puts("\n\nDownloading data...")
 
