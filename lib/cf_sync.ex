@@ -236,9 +236,9 @@ defmodule CFSync do
   Phoenix.Component that renders RichText.
 
   You can pass these assigns:
-  content: the %RichText{} struct to render
-  class: a class attribute that will be added to root element of rendered HTML
-  delegate: a module with custom components to use for rendering
+  - content: the %RichText{} struct to render
+  - class: a class attribute that will be added to root element of rendered HTML
+  - delegate: a module with custom components to use for rendering
 
   Delegate and class are optional.
   To use delegate module, see RichTextRenderer and RichTextRendererTest modules
