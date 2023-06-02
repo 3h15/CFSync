@@ -4,7 +4,7 @@ defmodule CFSync.MixProject do
   def project do
     [
       app: :cf_sync,
-      version: "0.12.0",
+      version: "0.13.0",
       elixir: "~> 1.13",
       name: "CFSync",
       description: description(),
