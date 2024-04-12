@@ -192,8 +192,8 @@ defmodule CFSync.Store do
     if Process.cancel_timer(state.current_timer) do
       schedule_tick(state, 0)
     else
-      # Timer was not found, it means it is expired and the process has a 
-      # tick message waiting in the inbox. Let the process continue to that tick. 
+      # Timer was not found, it means it is expired and the process has a
+      # tick message waiting in the inbox. Let the process continue to that tick.
       state
     end
   end
