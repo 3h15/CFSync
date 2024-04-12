@@ -150,9 +150,15 @@ defmodule CFSync.Store do
   defp update_table(state, %SyncPayload{deltas: deltas}) do
     for delta <- deltas do
       case delta do
-        {:upsert, item} -> Table.put(state.table_reference, item)
-        {:delete_asset, asset_id} -> Table.delete_asset(state.table_reference, asset_id)
-        {:delete_entry, entry_id} -> Table.delete_entry(state.table_reference, entry_id)
+        {:upsert, item} ->
+          item = Map.put(item, :store, state.table_reference)
+          Table.put(state.table_reference, item)
+
+        {:delete_asset, asset_id} ->
+          Table.delete_asset(state.table_reference, asset_id)
+
+        {:delete_entry, entry_id} ->
+          Table.delete_entry(state.table_reference, entry_id)
       end
     end
 
