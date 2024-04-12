@@ -5,9 +5,10 @@ defmodule CFSync.Store do
 
   use GenServer
 
+  alias CFSync.Asset
+  alias CFSync.Entry
   alias CFSync.Store.State
   alias CFSync.Store.Table
-
   alias CFSync.SyncPayload
 
   @http_client_module Application.compile_env(
@@ -76,15 +77,13 @@ defmodule CFSync.Store do
         %State{
           next_url: url,
           delivery_token: token,
-          content_types: content_types,
-          locale: locale,
           dump_name: nil
         } = state
       ) do
     case(@http_client_module.fetch(url, token)) do
       {:ok, data} ->
         # We got a response, handle it
-        payload = SyncPayload.new(data, content_types, locale)
+        payload = SyncPayload.new(data)
 
         {:noreply,
          state
@@ -109,16 +108,14 @@ defmodule CFSync.Store do
   def handle_info(
         :sync,
         %State{
-          dump_name: dump_name,
-          content_types: content_types,
-          locale: locale
+          dump_name: dump_name
         } = state
       ) do
     state =
       case CfSync.Tasks.Utils.read_dump(dump_name) do
         {:ok, pages} ->
           Enum.reduce(pages, state, fn page, state ->
-            payload = SyncPayload.new(page, content_types, locale)
+            payload = SyncPayload.new(page)
             update_table(state, payload)
           end)
 
@@ -147,12 +144,23 @@ defmodule CFSync.Store do
     State.update(s, url, :next_sync)
   end
 
-  defp update_table(state, %SyncPayload{deltas: deltas}) do
+  defp update_table(
+         %{
+           table_reference: store,
+           content_types: content_types,
+           locale: locale
+         } = state,
+         %SyncPayload{deltas: deltas}
+       ) do
     for delta <- deltas do
       case delta do
-        {:upsert, item} ->
-          item = Map.put(item, :store, state.table_reference)
-          Table.put(state.table_reference, item)
+        {:upsert_asset, item} ->
+          asset = Asset.new(item, locale, store)
+          Table.put(state.table_reference, asset)
+
+        {:upsert_entry, item} ->
+          entry = Entry.new(item, content_types, locale, store)
+          Table.put(state.table_reference, entry)
 
         {:delete_asset, asset_id} ->
           Table.delete_asset(state.table_reference, asset_id)

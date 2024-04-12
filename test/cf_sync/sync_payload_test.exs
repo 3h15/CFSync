@@ -8,59 +8,23 @@ defmodule CFSync.SyncPayloadTest do
   alias CFSync.Asset
 
   test "new/2 creates a valid struct with next page URL" do
-    locale = Faker.String.base64(2)
-    content_types = CFSyncTest.Entries.mapping()
     url = Faker.String.base64(20)
-
-    data = %{
-      "nextPageUrl" => url,
-      "items" => []
-    }
-
-    assert %SyncPayload{next_url: ^url, next_url_type: :next_page} =
-             SyncPayload.new(data, content_types, locale)
+    data = %{"nextPageUrl" => url, "items" => []}
+    assert %SyncPayload{next_url: ^url, next_url_type: :next_page} = SyncPayload.new(data)
   end
 
   test "new/2 creates a valid struct with next sync URL" do
-    locale = Faker.String.base64(2)
-    content_types = CFSyncTest.Entries.mapping()
     url = Faker.String.base64(20)
-
-    data = %{
-      "nextSyncUrl" => url,
-      "items" => []
-    }
-
-    assert %SyncPayload{next_url: ^url, next_url_type: :next_sync} =
-             SyncPayload.new(data, content_types, locale)
+    data = %{"nextSyncUrl" => url, "items" => []}
+    assert %SyncPayload{next_url: ^url, next_url_type: :next_sync} = SyncPayload.new(data)
   end
 
   test "new/2 correctly dispatches deltas" do
-    locale = Faker.String.base64(2)
-    content_types = CFSyncTest.Entries.mapping()
-
     item = fn
       Asset, id, type ->
         %{
           "sys" => %{"id" => id, "type" => type, "space" => %{"sys" => %{"id" => "anyspace"}}},
-          "fields" => %{
-            "title" => %{locale => ""},
-            "description" => %{locale => ""},
-            "file" => %{
-              locale => %{
-                "contentType" => "",
-                "fileName" => "",
-                "url" => "",
-                "details" => %{
-                  "image" => %{
-                    "width" => 0,
-                    "height" => 0
-                  },
-                  "size" => 0
-                }
-              }
-            }
-          }
+          "fields" => :fields
         }
 
       Entry, id, type ->
@@ -72,7 +36,7 @@ defmodule CFSync.SyncPayloadTest do
             "contentType" => %{"sys" => %{"id" => "page"}},
             "space" => %{"sys" => %{"id" => "anyspace"}}
           },
-          "fields" => %{}
+          "fields" => :fields
         }
     end
 
@@ -88,17 +52,21 @@ defmodule CFSync.SyncPayloadTest do
       ]
     }
 
-    %SyncPayload{deltas: deltas} = SyncPayload.new(data, content_types, locale)
+    %SyncPayload{deltas: deltas} = SyncPayload.new(data)
 
     assert length(deltas) == 6
 
     assert [
-             {:upsert, %Entry{id: "1-upsert-entry"}},
+             {:upsert_entry, item_0},
              {:delete_asset, "2-del-asset"},
-             {:upsert, %Entry{id: "3-upsert-entry"}},
+             {:upsert_entry, item_2},
              {:delete_asset, "4-del-asset"},
              {:delete_entry, "5-del-entry"},
-             {:upsert, %Asset{id: "6-upsert-asset"}}
+             {:upsert_asset, item_5}
            ] = deltas
+
+    assert item_0 == Enum.at(data["items"], 0)
+    assert item_2 == Enum.at(data["items"], 2)
+    assert item_5 == Enum.at(data["items"], 5)
   end
 end

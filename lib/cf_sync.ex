@@ -147,7 +147,7 @@ defmodule CFSync do
   Forces the store for `name` to sync immediately. Use the name you provided to `start_link/4`.
 
   CFSync regularly synces entries from Contentful API (see `start_link/4`).
-  Calling this function triggers an immediate sync and resets the timer for the 
+  Calling this function triggers an immediate sync and resets the timer for the
   next regular sync, so it will only happen after the full delay (`:delta_sync_interval`)
   counting from the immediate sync.
 
@@ -155,7 +155,7 @@ defmodule CFSync do
   [webhooks](https://www.contentful.com/developers/docs/concepts/webhooks/)
   to trigger calls to this function in order to achieve almost instant
   synchronisation. You can then relax `:delta_sync_interval` in the configuration
-  to lower the number of API requests made to Contentful. 
+  to lower the number of API requests made to Contentful.
 
   ```
   CFSync.force_sync(MyApp.MyCFSync)
@@ -231,6 +231,30 @@ defmodule CFSync do
   @spec get_link_target(store(), Link.t()) :: nil | Entry.t() | Asset.t()
   def get_link_target(store, %Link{} = link) when not is_atom(store),
     do: Store.Table.get_link_target(store, link)
+
+  @doc """
+  Resolves a `link` (child entry or asset) from an entry field and returns the corresponding asset or entry.
+
+  Returns `nil` if the child entry or asset is not found.
+  """
+  @spec get_child(Entry.t(), atom()) :: nil | Entry.t() | Asset.t()
+  def get_child(%Entry{} = entry, field_name) when is_atom(field_name) do
+    link = Map.fetch!(entry.fields, field_name)
+    get_link_target(entry.store, link)
+  end
+
+  @doc """
+  Resolves a list of `link` (children entries or assets) from an entry field and returns the corresponding assets or entries.
+
+  Returns the list of links mapped to the corresponding assets or entries.
+  If an entry or asset is not found, it will be mapped to `nil`.
+  """
+  @spec get_children(Entry.t(), atom()) :: [nil | Entry.t() | Asset.t()]
+  def get_children(%Entry{} = entry, field_name) when is_atom(field_name) do
+    entry.fields
+    |> Map.fetch!(field_name)
+    |> Enum.map(&get_link_target(entry.store, &1))
+  end
 
   @doc """
   Phoenix.Component that renders RichText.

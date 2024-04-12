@@ -119,6 +119,7 @@ defmodule CFSync.Store.TableTest do
 
   defp create_page_entry() do
     %Entry{
+      store: nil,
       id: Faker.String.base64(10),
       revision: Faker.random_between(1, 1000),
       space_id: Faker.String.base64(10),
@@ -129,6 +130,7 @@ defmodule CFSync.Store.TableTest do
 
   defp create_simple_page_entry() do
     %Entry{
+      store: nil,
       id: Faker.String.base64(10),
       revision: Faker.random_between(1, 1000),
       space_id: Faker.String.base64(10),
@@ -139,6 +141,7 @@ defmodule CFSync.Store.TableTest do
 
   defp create_asset() do
     %Asset{
+      store: nil,
       id: Faker.String.base64(10),
       space_id: Faker.String.base64(10),
       content_type: Faker.String.base64(10),

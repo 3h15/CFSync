@@ -265,14 +265,16 @@ defmodule CFSync.StoreTest do
       item.(Asset, "4-upsert-asset", "Asset")
     ])
 
+    store = CFSync.from(name)
+
     assert [
-             %Entry{id: "1-upsert-entry"},
-             %Entry{id: "2-upsert-entry"}
+             %Entry{store: ^store, id: "1-upsert-entry"},
+             %Entry{store: ^store, id: "2-upsert-entry"}
            ] = Table.get_entries(name) |> Enum.sort_by(& &1.id)
 
     assert [
-             %Asset{id: "3-upsert-asset"},
-             %Asset{id: "4-upsert-asset"}
+             %Asset{store: ^store, id: "3-upsert-asset"},
+             %Asset{store: ^store, id: "4-upsert-asset"}
            ] = Table.get_assets(name) |> Enum.sort_by(& &1.id)
 
     #  Add some items should concat with previsou

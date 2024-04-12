@@ -9,11 +9,11 @@ defmodule CFSync.Entry do
 
   alias CFSync.Entry.Fields
 
-  @enforce_keys [:id, :revision, :space_id, :content_type, :fields]
-  defstruct [:id, :revision, :space_id, :content_type, :fields, store: nil]
+  @enforce_keys [:store, :id, :revision, :space_id, :content_type, :fields]
+  defstruct [:store, :id, :revision, :space_id, :content_type, :fields]
 
   @type t :: %__MODULE__{
-          store: CFSync.store() | nil,
+          store: CFSync.store(),
           id: binary(),
           revision: integer(),
           space_id: binary(),
@@ -22,7 +22,7 @@ defmodule CFSync.Entry do
         }
 
   @doc false
-  @spec new(map, map, binary) :: t()
+  @spec new(map, map, binary, CFSync.store()) :: t()
   def new(
         %{
           "sys" => %{
@@ -43,13 +43,15 @@ defmodule CFSync.Entry do
           "fields" => fields
         },
         content_types,
-        locale
+        locale,
+        store
       ) do
     case get_config_for_content_type(content_types, content_type) do
       {:ok, config} ->
         fields = config.fields_module.new({fields, locale})
 
         %__MODULE__{
+          store: store,
           id: id,
           revision: revision,
           space_id: space_id,
@@ -59,6 +61,7 @@ defmodule CFSync.Entry do
 
       :error ->
         %__MODULE__{
+          store: store,
           id: id,
           revision: revision,
           space_id: space_id,

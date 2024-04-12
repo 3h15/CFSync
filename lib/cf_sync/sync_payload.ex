@@ -1,10 +1,7 @@
 defmodule CFSync.SyncPayload do
   @moduledoc false
 
-  alias CFSync.Entry
-  alias CFSync.Asset
-
-  @type delta() :: {:upsert, Entry.t() | Asset.t()} | {:delete_asset | :delete_entry, binary()}
+  @type delta() :: {:upsert, map() | map()} | {:delete_asset | :delete_entry, binary()}
 
   defstruct next_url: "",
             next_url_type: :next_page,
@@ -16,34 +13,31 @@ defmodule CFSync.SyncPayload do
           deltas: list(delta())
         }
 
-  @spec new(%{:items => [], optional(any) => any}, map, binary) ::
-          CFSync.SyncPayload.t()
-  def new(%{"nextPageUrl" => url, "items" => items}, content_types, locale)
-      when is_list(items) and is_binary(locale) do
+  @spec new(%{:items => [], optional(any) => any}) :: CFSync.SyncPayload.t()
+  def new(%{"nextPageUrl" => url, "items" => items}) do
     %__MODULE__{
       next_url: url,
       next_url_type: :next_page,
-      deltas: deltas(items, content_types, locale)
+      deltas: deltas(items)
     }
   end
 
-  def new(%{"nextSyncUrl" => url, "items" => items}, content_types, locale)
-      when is_list(items) and is_binary(locale) do
+  def new(%{"nextSyncUrl" => url, "items" => items}) do
     %__MODULE__{
       next_url: url,
       next_url_type: :next_sync,
-      deltas: deltas(items, content_types, locale)
+      deltas: deltas(items)
     }
   end
 
-  defp deltas(items, content_types, locale) do
+  defp deltas(items) do
     for %{"sys" => %{"id" => id, "type" => type}} = item <- items do
       case type do
         "Asset" ->
-          {:upsert, Asset.new(item, locale)}
+          {:upsert_asset, item}
 
         "Entry" ->
-          {:upsert, Entry.new(item, content_types, locale)}
+          {:upsert_entry, item}
 
         "DeletedAsset" ->
           {:delete_asset, id}

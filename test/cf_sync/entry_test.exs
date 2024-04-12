@@ -9,18 +9,20 @@ defmodule CFSync.EntryTest do
   import ExUnit.CaptureLog
 
   test "new/2 Creates a new entry with correct fields struct" do
+    store = make_ref()
     locale = Faker.String.base64(2)
     content_types = CFSyncTest.Entries.mapping()
     name = Faker.String.base64()
     data = entry_payload(fields: %{"name" => %{locale => name}})
 
     assert %Entry{
+             store: ^store,
              id: id,
              revision: revision,
              space_id: space_id,
              content_type: :page,
              fields: %Page{name: ^name}
-           } = Entry.new(data, content_types, locale)
+           } = Entry.new(data, content_types, locale, store)
 
     assert id == data["sys"]["id"]
     assert revision == data["sys"]["revision"]
@@ -35,15 +37,17 @@ defmodule CFSync.EntryTest do
     ]
 
     for {given, expected} <- content_types do
+      store = make_ref()
       locale = Faker.String.base64(2)
       content_types = CFSyncTest.Entries.mapping()
-      entry = entry_payload(content_type: given) |> Entry.new(content_types, locale)
+      entry = entry_payload(content_type: given) |> Entry.new(content_types, locale, store)
 
       assert %Entry{content_type: ^expected} = entry
     end
   end
 
   test "It logs an error when content-type mapping is missing" do
+    store = make_ref()
     locale = Faker.String.base64(2)
     content_types = CFSyncTest.Entries.mapping()
     content_type = "unknown-content-type-" <> Faker.String.base64()
@@ -53,7 +57,7 @@ defmodule CFSync.EntryTest do
       with_log(
         [level: :error],
         fn ->
-          Entry.new(data, content_types, locale)
+          Entry.new(data, content_types, locale, store)
         end
       )
 
@@ -67,6 +71,7 @@ defmodule CFSync.EntryTest do
   end
 
   test "It logs an error when content-type has invalid mapping parameters" do
+    store = make_ref()
     locale = Faker.String.base64(2)
     content_types = CFSyncTest.Entries.mapping()
     content_type = "contentTypeWithInvalidConfiguration"
@@ -79,7 +84,7 @@ defmodule CFSync.EntryTest do
       with_log(
         [level: :error],
         fn ->
-          Entry.new(data, content_types, locale)
+          Entry.new(data, content_types, locale, store)
         end
       )
 
@@ -93,6 +98,7 @@ defmodule CFSync.EntryTest do
   end
 
   test "It logs an error when module for content type is not defined" do
+    store = make_ref()
     locale = Faker.String.base64(2)
     content_types = CFSyncTest.Entries.mapping()
     content_type = "contentTypeWithUndefinedModule"
@@ -103,7 +109,7 @@ defmodule CFSync.EntryTest do
       with_log(
         [level: :error],
         fn ->
-          Entry.new(data, content_types, locale)
+          Entry.new(data, content_types, locale, store)
         end
       )
 

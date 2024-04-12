@@ -6,6 +6,7 @@ defmodule CFSync.AssetTest do
   alias CFSync.Asset
 
   test "new/2 Creates a new asset and correctly maps all values" do
+    store = make_ref()
     locale = Faker.String.base64(2)
     id = Faker.String.base64()
     space_id = Faker.String.base64()
@@ -49,6 +50,7 @@ defmodule CFSync.AssetTest do
     }
 
     assert %Asset{
+             store: ^store,
              id: id,
              space_id: ^space_id,
              title: ^title,
@@ -59,7 +61,7 @@ defmodule CFSync.AssetTest do
              width: ^width,
              height: ^height,
              size: ^size
-           } = Asset.new(data, locale)
+           } = Asset.new(data, locale, store)
 
     assert id == data["sys"]["id"]
   end

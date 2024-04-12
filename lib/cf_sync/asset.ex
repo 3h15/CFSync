@@ -6,6 +6,7 @@ defmodule CFSync.Asset do
   """
 
   @enforce_keys [
+    :store,
     :id,
     :content_type,
     :space_id,
@@ -18,6 +19,7 @@ defmodule CFSync.Asset do
     :size
   ]
   defstruct [
+    :store,
     :id,
     :content_type,
     :space_id,
@@ -27,12 +29,11 @@ defmodule CFSync.Asset do
     :url,
     :width,
     :height,
-    :size,
-    store: nil
+    :size
   ]
 
   @type t :: %__MODULE__{
-          store: CFSync.store() | nil,
+          store: CFSync.store(),
           id: binary(),
           content_type: binary(),
           space_id: binary(),
@@ -46,7 +47,7 @@ defmodule CFSync.Asset do
         }
 
   @doc false
-  @spec new(map, binary()) :: t()
+  @spec new(map, binary(), CFSync.store()) :: t()
   def new(
         %{
           "sys" => %{
@@ -60,7 +61,8 @@ defmodule CFSync.Asset do
           },
           "fields" => fields
         },
-        locale
+        locale,
+        store
       ) do
     title = fields["title"][locale] || ""
     description = fields["description"][locale] || ""
@@ -72,6 +74,7 @@ defmodule CFSync.Asset do
     size = fields["file"][locale]["details"]["size"] || 0
 
     %__MODULE__{
+      store: store,
       id: id,
       space_id: space_id,
       content_type: content_type,

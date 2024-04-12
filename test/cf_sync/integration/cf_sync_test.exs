@@ -41,6 +41,10 @@ defmodule CFSyncTest.Integration.CFSyncTest do
     page = get_entry(store, "ygP74CyESVFcDpJojH0tT")
     one = get_asset(store, "5m9oC9bksUxeHqVZXuWk8V")
     altair = get_entry(store, "18vvU4uLfjZA409cWC7BJu")
+    tarazed = get_entry(store, "4fy2iBRIRPm20eaViIl0R6")
+    capella = get_entry(store, "FMeGnbv6ZnP6OqSwQSHMW")
+    eltanin = get_entry(store, "41t5pomHIVxPaeF0fadmG1")
+    deneb = get_entry(store, "3hOhfoV5IefhWp2uwq17YW")
 
     assert %Entry{
              content_type: :page,
@@ -84,6 +88,9 @@ defmodule CFSyncTest.Integration.CFSyncTest do
 
     assert get_link_target(store, page.fields.one_asset) == one
     assert get_link_target(store, List.first(page.fields.many_links)) == altair
+
+    assert get_child(page, :one_asset) == one
+    assert get_children(page, :many_links) == [altair, tarazed, capella, eltanin, deneb]
 
     assert %Entry{fields: %{name: "Altaïr"}} = get_entry(store, "18vvU4uLfjZA409cWC7BJu")
     assert %Entry{fields: %{name: "Tarazed"}} = get_entry(store, "4fy2iBRIRPm20eaViIl0R6")
