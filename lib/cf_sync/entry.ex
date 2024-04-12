@@ -10,9 +10,10 @@ defmodule CFSync.Entry do
   alias CFSync.Entry.Fields
 
   @enforce_keys [:id, :revision, :space_id, :content_type, :fields]
-  defstruct [:id, :revision, :space_id, :content_type, :fields]
+  defstruct [:id, :revision, :space_id, :content_type, :fields, store: nil]
 
   @type t :: %__MODULE__{
+          store: CFSync.store() | nil,
           id: binary(),
           revision: integer(),
           space_id: binary(),

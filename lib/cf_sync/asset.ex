@@ -27,10 +27,12 @@ defmodule CFSync.Asset do
     :url,
     :width,
     :height,
-    :size
+    :size,
+    store: nil
   ]
 
   @type t :: %__MODULE__{
+          store: CFSync.store() | nil,
           id: binary(),
           content_type: binary(),
           space_id: binary(),
