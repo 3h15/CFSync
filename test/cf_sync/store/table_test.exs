@@ -124,7 +124,8 @@ defmodule CFSync.Store.TableTest do
       revision: Faker.random_between(1, 1000),
       space_id: Faker.String.base64(10),
       content_type: :page,
-      fields: CFSyncTest.Fields.Page.new({%{}, "en"})
+      fields: CFSyncTest.Fields.Page.new({%{}, "en"}),
+      locale: "en"
     }
   end
 
@@ -135,7 +136,8 @@ defmodule CFSync.Store.TableTest do
       revision: Faker.random_between(1, 1000),
       space_id: Faker.String.base64(10),
       content_type: :simple_page,
-      fields: CFSyncTest.Fields.SimplePage.new({%{}, "en"})
+      fields: CFSyncTest.Fields.SimplePage.new({%{}, "en"}),
+      locale: "en"
     }
   end
 
@@ -145,6 +147,7 @@ defmodule CFSync.Store.TableTest do
       id: Faker.String.base64(10),
       space_id: Faker.String.base64(10),
       content_type: Faker.String.base64(10),
+      locale: "en",
       title: Faker.String.base64(10),
       description: Faker.String.base64(10),
       file_name: Faker.String.base64(10),

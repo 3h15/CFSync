@@ -9,8 +9,8 @@ defmodule CFSync.Entry do
 
   alias CFSync.Entry.Fields
 
-  @enforce_keys [:store, :id, :revision, :space_id, :content_type, :fields]
-  defstruct [:store, :id, :revision, :space_id, :content_type, :fields]
+  @enforce_keys [:store, :id, :revision, :space_id, :content_type, :fields, :locale]
+  defstruct [:store, :id, :revision, :space_id, :content_type, :fields, :locale]
 
   @type t :: %__MODULE__{
           store: CFSync.store(),
@@ -18,7 +18,8 @@ defmodule CFSync.Entry do
           revision: integer(),
           space_id: binary(),
           content_type: atom(),
-          fields: Fields.t()
+          fields: Fields.t(),
+          locale: binary()
         }
 
   @doc false
@@ -56,7 +57,8 @@ defmodule CFSync.Entry do
           revision: revision,
           space_id: space_id,
           content_type: config.content_type,
-          fields: fields
+          fields: fields,
+          locale: locale
         }
 
       :error ->
@@ -66,7 +68,8 @@ defmodule CFSync.Entry do
           revision: revision,
           space_id: space_id,
           content_type: :unknown,
-          fields: nil
+          fields: nil,
+          locale: locale
         }
     end
   end
