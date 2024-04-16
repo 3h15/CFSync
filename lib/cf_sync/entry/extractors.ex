@@ -188,7 +188,7 @@ defmodule CFSync.Entry.Extractors do
   @spec extract_rich_text(data(), String.t(), nil | RichText.t()) :: nil | RichText.t()
   def extract_rich_text(data, field_name, default \\ nil) do
     case extract(data, field_name) do
-      rt when is_map(rt) -> RichText.new(rt)
+      rt when is_map(rt) -> RichText.new(rt, data.store)
       _ -> default
     end
   end
