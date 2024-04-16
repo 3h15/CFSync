@@ -6,14 +6,23 @@ defmodule CFSync.RichTextTest do
   alias CFSync.RichText
   alias CFSync.Link
 
-  test "new(:empty) creates avalid empty RichText struct" do
+  test "new(:empty) creates a valid empty RichText struct" do
     assert %RichText{
              type: :document,
              content: []
            } = RichText.new(:empty)
   end
 
-  test "new/1 recursively map rich text nodes as expected" do
+  test "new(:empty, store) creates a valid empty RichText struct" do
+    store = make_ref()
+
+    assert %RichText{
+             type: :document,
+             content: []
+           } = RichText.new(:empty, store)
+  end
+
+  test "new/2 recursively maps rich text nodes as expected" do
     document = %{
       "nodeType" => "document",
       "content" => [
@@ -152,7 +161,9 @@ defmodule CFSync.RichTextTest do
       ]
     }
 
-    rt = RichText.new(document)
+    store = make_ref()
+
+    rt = RichText.new(document, store)
 
     assert %RichText{
              type: :document,
@@ -260,11 +271,11 @@ defmodule CFSync.RichTextTest do
                },
                %RichText{
                  type: :embedded_entry,
-                 target: %Link{type: :entry, id: "entry_id_1"}
+                 target: %Link{store: ^store, type: :entry, id: "entry_id_1"}
                },
                %RichText{
                  type: :embedded_asset,
-                 target: %Link{type: :asset, id: "asset_id_1"}
+                 target: %Link{store: ^store, type: :asset, id: "asset_id_1"}
                },
                %RichText{
                  type: :embedded_entry_inline,
