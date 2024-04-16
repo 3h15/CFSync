@@ -86,8 +86,9 @@ defmodule CFSync.Entry do
           fields:
             fields_module.new(%{
               fields: fields,
-              locale: cf_locale,
-              store: store
+              cf_locale: cf_locale,
+              store: store,
+              locale: locale
             }),
           locale: locale
         }
