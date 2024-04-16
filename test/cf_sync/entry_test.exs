@@ -12,12 +12,12 @@ defmodule CFSync.EntryTest do
     @behaviour Entry.Fields
 
     defstruct [
-      :name
+      :data_arg
     ]
 
     def new(data) do
       %__MODULE__{
-        name: extract_binary(data, "name", "No name")
+        data_arg: data
       }
     end
   end
@@ -57,8 +57,15 @@ defmodule CFSync.EntryTest do
              revision: 12,
              space_id: "GHIJKL",
              content_type: :content_type_key,
-             fields: %Page{name: "A name"}
+             fields: %Page{data_arg: data_arg}
            } = Entry.new(data, content_types, {:en, "en_US"}, store)
+
+    # Assert extractors are called with the correct data
+    assert data_arg == %{
+             store: store,
+             fields: %{"name" => %{"en_US" => "A name"}},
+             locale: "en_US"
+           }
   end
 
   test "It logs an error when content-type mapping is missing" do
@@ -128,7 +135,7 @@ defmodule CFSync.EntryTest do
           }
         }
       },
-      "fields" => %{"name" => %{"en_US" => "A name"}}
+      "fields" => %{}
     }
 
     {result, log} =
@@ -174,7 +181,7 @@ defmodule CFSync.EntryTest do
           }
         }
       },
-      "fields" => %{"name" => %{"en_US" => "A name"}}
+      "fields" => %{}
     }
 
     {result, log} =

@@ -72,16 +72,23 @@ defmodule CFSync.Entry do
         store
       ) do
     case get_config_for_content_type(content_types, content_type) do
-      {:ok, config} ->
-        fields = config.fields_module.new({fields, cf_locale})
-
+      {:ok,
+       %{
+         content_type: content_type,
+         fields_module: fields_module
+       }} ->
         %__MODULE__{
           store: store,
           id: id,
           revision: revision,
           space_id: space_id,
-          content_type: config.content_type,
-          fields: fields,
+          content_type: content_type,
+          fields:
+            fields_module.new(%{
+              fields: fields,
+              locale: cf_locale,
+              store: store
+            }),
           locale: locale
         }
 
