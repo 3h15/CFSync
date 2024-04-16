@@ -70,7 +70,7 @@ defmodule CFSync.Store.TableTest do
 
       Enum.each(entries, &Table.put(reference, &1))
 
-      page_entries = Table.get_entries_for_content_type(reference, nil, :page)
+      page_entries = Table.get_entries_for_content_type(reference, :page, nil)
 
       assert length(page_entries) == 2
       assert entry_1 in page_entries
@@ -169,7 +169,7 @@ defmodule CFSync.Store.TableTest do
 
       Enum.each(entries, &Table.put(reference, &1))
 
-      fr_page_entries = Table.get_entries_for_content_type(reference, :fr, :page)
+      fr_page_entries = Table.get_entries_for_content_type(reference, :page, :fr)
 
       assert length(fr_page_entries) == 2
       assert entry_fr1 in fr_page_entries

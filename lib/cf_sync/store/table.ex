@@ -82,8 +82,8 @@ defmodule CFSync.Store.Table do
     end
   end
 
-  @spec get_entries_for_content_type(:ets.tid(), locale :: atom, content_type :: atom) :: list
-  def get_entries_for_content_type(ref, locale, content_type) do
+  @spec get_entries_for_content_type(:ets.tid(), content_type :: atom, locale :: atom) :: list
+  def get_entries_for_content_type(ref, content_type, locale) do
     records = :ets.match_object(ref, {{:_, :_, locale}, content_type, :_})
 
     for {_key, _content_type, entry} <- records do
