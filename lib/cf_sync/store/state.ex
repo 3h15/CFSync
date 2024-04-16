@@ -2,7 +2,8 @@ defmodule CFSync.Store.State do
   @moduledoc false
 
   @default_root_url "https://cdn.contentful.com/"
-  @default_locale "en-US"
+  @default_locale :en
+  @default_locales %{en: "en-US"}
   @default_initial_sync_interval 30
   @default_delta_sync_interval 5000
 
@@ -10,7 +11,8 @@ defmodule CFSync.Store.State do
     :name,
     :delivery_token,
     :content_types,
-    :locale,
+    :locales,
+    :main_locale,
     :table_reference,
     :current_timer,
     :initial_sync_interval,
@@ -26,8 +28,9 @@ defmodule CFSync.Store.State do
           name: atom,
           delivery_token: binary,
           content_types: map,
-          locale: binary,
-          current_timer: reference() | nil,
+          locales: %{atom => binary},
+          main_locale: atom,
+          current_timer: reference | nil,
           table_reference: :ets.tid(),
           initial_sync_interval: integer,
           delta_sync_interval: integer,
@@ -41,7 +44,9 @@ defmodule CFSync.Store.State do
   @spec new(atom, binary, binary, map, :ets.tid(), keyword) :: CFSync.Store.State.t()
   def new(name, space_id, delivery_token, content_types, table_reference, opts \\ []) do
     root_url = Keyword.get(opts, :root_url, @default_root_url)
-    locale = Keyword.get(opts, :locale, @default_locale)
+
+    locales = Keyword.get(opts, :locales, @default_locales)
+    main_locale = Keyword.get(opts, :main_locale, @default_locale)
 
     initial_sync_interval =
       Keyword.get(opts, :initial_sync_interval, @default_initial_sync_interval)
@@ -55,7 +60,8 @@ defmodule CFSync.Store.State do
       name: name,
       delivery_token: delivery_token,
       content_types: content_types,
-      locale: locale,
+      locales: locales,
+      main_locale: main_locale,
       current_timer: nil,
       table_reference: table_reference,
       initial_sync_interval: initial_sync_interval,
@@ -68,7 +74,8 @@ defmodule CFSync.Store.State do
 
   @spec new_from_dump(atom, true | binary, map, :ets.tid(), keyword) :: CFSync.Store.State.t()
   def new_from_dump(name, dump, content_types, table_reference, opts \\ []) do
-    locale = Keyword.get(opts, :locale, @default_locale)
+    locales = Keyword.get(opts, :locales, @default_locales)
+    main_locale = Keyword.get(opts, :main_locale, @default_locale)
 
     dump_name = if dump == true, do: "default", else: dump
 
@@ -76,7 +83,8 @@ defmodule CFSync.Store.State do
       name: name,
       delivery_token: "",
       content_types: content_types,
-      locale: locale,
+      locales: locales,
+      main_locale: main_locale,
       current_timer: nil,
       table_reference: table_reference,
       initial_sync_interval: 0,
