@@ -175,6 +175,7 @@ defmodule CFSync.Entry.ExtractorsTest do
     build = fn value_fun ->
       field_name = Faker.String.base64(8)
       locale = Faker.String.base64(2)
+      store = make_ref()
 
       {value, expected_value} =
         case value_fun.() do
@@ -182,8 +183,13 @@ defmodule CFSync.Entry.ExtractorsTest do
           value -> {value, value}
         end
 
-      data = %{field_name => %{locale => value}}
-      {field_name, locale, expected_value, data}
+      data = %{
+        fields: %{field_name => %{locale => value}},
+        locale: locale,
+        store: store
+      }
+
+      {field_name, expected_value, data}
     end
 
     %{extractors: extractors, build: build}
@@ -194,9 +200,9 @@ defmodule CFSync.Entry.ExtractorsTest do
     build: build
   } do
     for {fun, valid_value, _invalid_value} <- extractors do
-      {name, locale, expected_value, data} = build.(valid_value)
+      {name, expected_value, data} = build.(valid_value)
 
-      result = apply(Extractors, fun, [{data, locale}, name])
+      result = apply(Extractors, fun, [data, name])
 
       assert result == expected_value,
              "#{fun} with value #{inspect(data)} does not return #{inspect(expected_value)} but #{inspect(result)}"
@@ -208,8 +214,8 @@ defmodule CFSync.Entry.ExtractorsTest do
     build: build
   } do
     for {fun, _valid_value, invalid_value} <- extractors do
-      {name, locale, _expected_value, data} = build.(invalid_value)
-      assert apply(Extractors, fun, [{data, locale}, name]) == nil
+      {name, _expected_value, data} = build.(invalid_value)
+      assert apply(Extractors, fun, [data, name]) == nil
     end
   end
 
@@ -218,9 +224,9 @@ defmodule CFSync.Entry.ExtractorsTest do
     build: build
   } do
     for {fun, valid_value, _invalid_value} <- extractors do
-      {name, locale, _expected_value, data} = build.(valid_value)
+      {name, _expected_value, data} = build.(valid_value)
       invalid_name = "err_" <> name
-      assert apply(Extractors, fun, [{data, locale}, invalid_name]) == nil
+      assert apply(Extractors, fun, [data, invalid_name]) == nil
     end
   end
 
@@ -229,9 +235,9 @@ defmodule CFSync.Entry.ExtractorsTest do
     build: build
   } do
     for {fun, _valid_value, invalid_value} <- extractors do
-      {name, locale, expected_value, data} = build.(invalid_value)
+      {name, expected_value, data} = build.(invalid_value)
       default_value = expected_value
-      assert apply(Extractors, fun, [{data, locale}, name, default_value]) == expected_value
+      assert apply(Extractors, fun, [data, name, default_value]) == expected_value
     end
   end
 
@@ -240,11 +246,11 @@ defmodule CFSync.Entry.ExtractorsTest do
     build: build
   } do
     for {fun, valid_value, _invalid_value} <- extractors do
-      {name, locale, expected_value, data} = build.(valid_value)
+      {name, expected_value, data} = build.(valid_value)
       default_value = expected_value
       invalid_name = "err_" <> name
 
-      assert apply(Extractors, fun, [{data, locale}, invalid_name, default_value]) ==
+      assert apply(Extractors, fun, [data, invalid_name, default_value]) ==
                expected_value
     end
   end
@@ -259,12 +265,12 @@ defmodule CFSync.Entry.ExtractorsTest do
       value => atom
     }
 
-    {name, locale, expected_value, data} =
+    {name, expected_value, data} =
       build.(fn ->
         {value, atom}
       end)
 
-    assert Extractors.extract_atom({data, locale}, name, mapping) == expected_value
+    assert Extractors.extract_atom(data, name, mapping) == expected_value
   end
 
   describe "extract_atom/4 without default value" do
@@ -277,9 +283,9 @@ defmodule CFSync.Entry.ExtractorsTest do
 
       unmapped_value = Faker.String.base64(8)
 
-      {name, locale, _expected_value, data} = build.(fn -> unmapped_value end)
+      {name, _expected_value, data} = build.(fn -> unmapped_value end)
 
-      assert Extractors.extract_atom({data, locale}, name, mapping) == nil
+      assert Extractors.extract_atom(data, name, mapping) == nil
     end
 
     test "extract_atom/4 returns nil when name is invalid", %{
@@ -289,10 +295,10 @@ defmodule CFSync.Entry.ExtractorsTest do
       value = Faker.String.base64(8)
       mapping = %{value => atom}
 
-      {name, locale, _expected_value, data} = build.(fn -> value end)
+      {name, _expected_value, data} = build.(fn -> value end)
 
       invalid_name = "err_" <> name
-      assert Extractors.extract_atom({data, locale}, invalid_name, mapping) == nil
+      assert Extractors.extract_atom(data, invalid_name, mapping) == nil
     end
   end
 
@@ -307,9 +313,9 @@ defmodule CFSync.Entry.ExtractorsTest do
       default_value = Faker.String.base64(8)
       unmapped_value = Faker.String.base64(8)
 
-      {name, locale, _expected_value, data} = build.(fn -> unmapped_value end)
+      {name, _expected_value, data} = build.(fn -> unmapped_value end)
 
-      assert Extractors.extract_atom({data, locale}, name, mapping, default_value) ==
+      assert Extractors.extract_atom(data, name, mapping, default_value) ==
                default_value
     end
 
@@ -322,11 +328,11 @@ defmodule CFSync.Entry.ExtractorsTest do
 
       mapping = %{value => atom}
 
-      {name, locale, _expected_value, data} = build.(fn -> value end)
+      {name, _expected_value, data} = build.(fn -> value end)
 
       invalid_name = "err_" <> name
 
-      assert Extractors.extract_atom({data, locale}, invalid_name, mapping, default_value) ==
+      assert Extractors.extract_atom(data, invalid_name, mapping, default_value) ==
                default_value
     end
   end
@@ -337,12 +343,12 @@ defmodule CFSync.Entry.ExtractorsTest do
     value = Faker.String.base64(8)
     fun = fn v -> {:processed, v} end
 
-    {name, locale, expected_value, data} =
+    {name, expected_value, data} =
       build.(fn ->
         {value, {:processed, value}}
       end)
 
-    assert Extractors.extract_custom({data, locale}, name, fun) == expected_value
+    assert Extractors.extract_custom(data, name, fun) == expected_value
   end
 
   test "extract_custom/3 passes nil to fun when name is invalid", %{
@@ -351,9 +357,9 @@ defmodule CFSync.Entry.ExtractorsTest do
     value = Faker.String.base64(8)
     fun = fn v -> {:processed, v} end
 
-    {name, locale, _expected_value, data} = build.(fn -> value end)
+    {name, _expected_value, data} = build.(fn -> value end)
 
     invalid_name = "err_" <> name
-    assert Extractors.extract_custom({data, locale}, invalid_name, fun) == {:processed, nil}
+    assert Extractors.extract_custom(data, invalid_name, fun) == {:processed, nil}
   end
 end
