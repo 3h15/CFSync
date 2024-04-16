@@ -12,8 +12,9 @@ defmodule CFSync.Entry.Extractors do
   """
   @opaque data() :: %{
             fields: map(),
-            locale: String.t(),
-            store: CFSync.store()
+            cf_locale: String.t(),
+            store: CFSync.store(),
+            locale: atom()
           }
 
   @doc """
@@ -149,7 +150,7 @@ defmodule CFSync.Entry.Extractors do
   @spec extract_link(data(), String.t(), nil | Link.t()) :: nil | Link.t()
   def extract_link(data, field_name, default \\ nil) do
     with link_data when is_map(link_data) <- extract(data, field_name),
-         %Link{} = link <- try_link(link_data, data.store) do
+         %Link{} = link <- try_link(link_data, data.store, data.locale) do
       link
     else
       _ -> default
@@ -169,7 +170,7 @@ defmodule CFSync.Entry.Extractors do
     case extract(data, field_name) do
       links when is_list(links) ->
         links
-        |> Enum.map(&try_link(&1, data.store))
+        |> Enum.map(&try_link(&1, data.store, data.locale))
         |> Enum.reject(&is_nil/1)
 
       _ ->
@@ -230,15 +231,15 @@ defmodule CFSync.Entry.Extractors do
   defp extract(
          %{
            fields: fields,
-           locale: locale
+           cf_locale: cf_locale
          },
          field
        ) do
-    fields[field][locale]
+    fields[field][cf_locale]
   end
 
-  defp try_link(link_data, store) do
-    Link.new(link_data, store)
+  defp try_link(link_data, store, locale) do
+    Link.new(link_data, store, locale)
   rescue
     _ ->
       Logger.error("Bad link data:\n#{inspect(link_data)}")
