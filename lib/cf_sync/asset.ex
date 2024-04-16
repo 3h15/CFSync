@@ -7,12 +7,13 @@ defmodule CFSync.Asset do
 
   @enforce_keys [
     :store,
-    :id,
-    :content_type,
     :space_id,
+    :id,
     :locale,
     :title,
     :description,
+    # This is the content type of the file, not an equivalent to the content type of an entry
+    :content_type,
     :file_name,
     :url,
     :width,
@@ -21,12 +22,12 @@ defmodule CFSync.Asset do
   ]
   defstruct [
     :store,
-    :id,
-    :content_type,
     :space_id,
+    :id,
     :locale,
     :title,
     :description,
+    :content_type,
     :file_name,
     :url,
     :width,
@@ -36,12 +37,12 @@ defmodule CFSync.Asset do
 
   @type t :: %__MODULE__{
           store: CFSync.store(),
-          id: binary(),
-          content_type: binary(),
           space_id: binary(),
-          locale: binary(),
+          id: binary(),
+          locale: atom(),
           title: binary(),
           description: binary(),
+          content_type: binary(),
           file_name: binary(),
           url: binary(),
           width: integer(),
@@ -50,7 +51,13 @@ defmodule CFSync.Asset do
         }
 
   @doc false
-  @spec new(map, binary(), CFSync.store()) :: t()
+  # locale is the "CFSync" locale: it is an atom, used as a key in ETS tables.
+  # cf_locale is the Contentful locale: it is a binary, used as a key in the Contentful API.
+  @spec new(
+          data :: map(),
+          {locale :: atom(), cf_locale :: binary()},
+          store :: CFSync.store()
+        ) :: t()
   def new(
         %{
           "sys" => %{
@@ -64,26 +71,26 @@ defmodule CFSync.Asset do
           },
           "fields" => fields
         },
-        locale,
+        {locale, cf_locale},
         store
       ) do
-    title = fields["title"][locale] || ""
-    description = fields["description"][locale] || ""
-    content_type = fields["file"][locale]["contentType"] || ""
-    file_name = fields["file"][locale]["fileName"] || ""
-    url = fields["file"][locale]["url"] || ""
-    width = fields["file"][locale]["details"]["image"]["width"] || 0
-    height = fields["file"][locale]["details"]["image"]["height"] || 0
-    size = fields["file"][locale]["details"]["size"] || 0
+    title = fields["title"][cf_locale] || ""
+    description = fields["description"][cf_locale] || ""
+    content_type = fields["file"][cf_locale]["contentType"] || ""
+    file_name = fields["file"][cf_locale]["fileName"] || ""
+    url = fields["file"][cf_locale]["url"] || ""
+    width = fields["file"][cf_locale]["details"]["image"]["width"] || 0
+    height = fields["file"][cf_locale]["details"]["image"]["height"] || 0
+    size = fields["file"][cf_locale]["details"]["size"] || 0
 
     %__MODULE__{
       store: store,
-      id: id,
       space_id: space_id,
-      content_type: content_type,
+      id: id,
       locale: locale,
       title: title,
       description: description,
+      content_type: content_type,
       file_name: file_name,
       url: url,
       width: width,

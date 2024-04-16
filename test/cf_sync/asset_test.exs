@@ -6,63 +6,51 @@ defmodule CFSync.AssetTest do
   alias CFSync.Asset
 
   test "new/2 Creates a new asset and correctly maps all values" do
-    store = make_ref()
-    locale = Faker.String.base64(2)
-    id = Faker.String.base64()
-    space_id = Faker.String.base64()
-    title = Faker.String.base64()
-    description = Faker.String.base64()
-    content_type = Faker.String.base64()
-    file_name = Faker.String.base64()
-    url = Faker.String.base64()
-    width = Faker.random_between(10, 1000)
-    height = Faker.random_between(10, 1000)
-    size = Faker.random_between(10, 1000)
-
     data = %{
       "sys" => %{
-        "id" => id,
+        "id" => "ABCDEF",
         "type" => "Asset",
         "space" => %{
           "sys" => %{
-            "id" => space_id
+            "id" => "GHIJKL"
           }
         }
       },
       "fields" => %{
-        "title" => %{locale => title},
-        "description" => %{locale => description},
+        "title" => %{"en_US" => "A cat!"},
+        "description" => %{"en_US" => "A picture of a cat"},
         "file" => %{
-          locale => %{
-            "contentType" => content_type,
-            "fileName" => file_name,
-            "url" => url,
+          "en_US" => %{
+            "contentType" => "image/jpeg",
+            "fileName" => "cat.jpg",
+            "url" => "https://example.com/cat.jpg",
             "details" => %{
               "image" => %{
-                "width" => width,
-                "height" => height
+                "width" => 123,
+                "height" => 456
               },
-              "size" => size
+              "size" => 789
             }
           }
         }
       }
     }
 
+    store = make_ref()
+
     assert %Asset{
              store: ^store,
-             id: id,
-             space_id: ^space_id,
-             title: ^title,
-             description: ^description,
-             content_type: ^content_type,
-             file_name: ^file_name,
-             url: ^url,
-             width: ^width,
-             height: ^height,
-             size: ^size
-           } = Asset.new(data, locale, store)
-
-    assert id == data["sys"]["id"]
+             space_id: "GHIJKL",
+             id: "ABCDEF",
+             locale: :en,
+             title: "A cat!",
+             description: "A picture of a cat",
+             content_type: "image/jpeg",
+             file_name: "cat.jpg",
+             url: "https://example.com/cat.jpg",
+             width: 123,
+             height: 456,
+             size: 789
+           } = Asset.new(data, {:en, "en_US"}, store)
   end
 end
