@@ -10,14 +10,15 @@ defmodule CFSync.Link do
 
   Links can be resolved through `CFSync.get_link_target/2`.
   """
-  @enforce_keys [:store, :type, :id]
+  @enforce_keys [:store, :type, :id, :locale]
 
-  defstruct [:store, :type, :id]
+  defstruct [:store, :type, :id, :locale]
 
   @type t :: %__MODULE__{
           store: CFSync.store(),
           type: :asset | :entry,
-          id: binary()
+          id: binary(),
+          locale: atom()
         }
 
   def new(
@@ -27,12 +28,14 @@ defmodule CFSync.Link do
             "id" => id
           }
         },
-        store
+        store,
+        locale
       ) do
     %__MODULE__{
       store: store,
       type: type(type),
-      id: id
+      id: id,
+      locale: locale
     }
   end
 

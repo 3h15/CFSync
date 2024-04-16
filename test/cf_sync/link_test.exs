@@ -18,7 +18,8 @@ defmodule CFSync.LinkTest do
     assert %Link{
              store: ^store,
              type: :asset,
-             id: "ZYXWVU"
-           } = Link.new(data, store)
+             id: "ZYXWVU",
+             locale: :en
+           } = Link.new(data, store, :en)
   end
 end
