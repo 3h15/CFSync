@@ -9,21 +9,45 @@ defmodule CFSync.Entry do
 
   alias CFSync.Entry.Fields
 
-  @enforce_keys [:store, :id, :revision, :space_id, :content_type, :fields, :locale]
-  defstruct [:store, :id, :revision, :space_id, :content_type, :fields, :locale]
+  @enforce_keys [
+    :store,
+    :space_id,
+    :id,
+    :locale,
+    :revision,
+    :content_type,
+    :fields
+  ]
+
+  defstruct [
+    :store,
+    :space_id,
+    :id,
+    :locale,
+    :revision,
+    :content_type,
+    :fields
+  ]
 
   @type t :: %__MODULE__{
           store: CFSync.store(),
-          id: binary(),
-          revision: integer(),
           space_id: binary(),
+          id: binary(),
+          locale: atom(),
+          revision: integer(),
           content_type: atom(),
-          fields: Fields.t(),
-          locale: binary()
+          fields: Fields.t()
         }
 
   @doc false
-  @spec new(map, map, binary, CFSync.store()) :: t()
+  # locale is the "CFSync" locale: it is an atom, used as a key in ETS tables.
+  # cf_locale is the Contentful locale: it is a binary, used as a key in the Contentful API.
+  @spec new(
+          data :: map(),
+          content_types :: map(),
+          {locale :: atom(), cf_locale :: binary()},
+          store :: CFSync.store()
+        ) :: t()
   def new(
         %{
           "sys" => %{
@@ -44,12 +68,12 @@ defmodule CFSync.Entry do
           "fields" => fields
         },
         content_types,
-        locale,
+        {locale, cf_locale},
         store
       ) do
     case get_config_for_content_type(content_types, content_type) do
       {:ok, config} ->
-        fields = config.fields_module.new({fields, locale})
+        fields = config.fields_module.new({fields, cf_locale})
 
         %__MODULE__{
           store: store,
