@@ -22,14 +22,28 @@ defmodule CFSync.Store do
   # before first request. Do not lower it too much to avoid make tests brittle.
   @delay_before_start 10
 
-  @spec start_link(atom, binary, binary, map, keyword) :: :ignore | {:error, any} | {:ok, pid}
-  def start_link(name, space_id, delivery_token, content_types, opts \\ []) do
-    init_args = [
-      {:name, name},
-      {:space_id, space_id},
-      {:delivery_token, delivery_token},
-      {:content_types, content_types} | opts
-    ]
+  @spec start_link(keyword) :: :ignore | {:error, any} | {:ok, pid}
+  def start_link(opts) do
+    name = Keyword.fetch!(opts, :name)
+
+    init_args =
+      Keyword.take(
+        opts,
+        [
+          :name,
+          :space_id,
+          :delivery_token,
+          :content_types,
+          :use_dump_file,
+          :root_url,
+          :locales,
+          :main_locale,
+          :initial_sync_interval,
+          :delta_sync_interval,
+          :auto_tick,
+          :invalidation_callbacks
+        ]
+      )
 
     GenServer.start_link(__MODULE__, init_args, name: name)
   end
@@ -148,25 +162,26 @@ defmodule CFSync.Store do
          %{
            table_reference: store,
            content_types: content_types,
-           locale: locale
+           main_locale: main_locale,
+           locales: locales
          } = state,
          %SyncPayload{deltas: deltas}
        ) do
     for delta <- deltas do
       case delta do
         {:upsert_asset, item} ->
-          asset = Asset.new(item, locale, store)
+          asset = Asset.new(item, {main_locale, locales[main_locale]}, store)
           Table.put(state.table_reference, asset)
 
         {:upsert_entry, item} ->
-          entry = Entry.new(item, content_types, locale, store)
+          entry = Entry.new(item, content_types, {main_locale, locales[main_locale]}, store)
           Table.put(state.table_reference, entry)
 
         {:delete_asset, asset_id} ->
-          Table.delete_asset(state.table_reference, asset_id)
+          Table.delete_asset(state.table_reference, asset_id, main_locale)
 
         {:delete_entry, entry_id} ->
-          Table.delete_entry(state.table_reference, entry_id)
+          Table.delete_entry(state.table_reference, entry_id, main_locale)
       end
     end
 

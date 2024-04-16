@@ -17,39 +17,16 @@ defmodule CFSync.StoreTest do
 
   setup :verify_on_exit!
 
-  setup do
-    name = Faker.Util.format("%A%4a%A%3a") |> String.to_atom()
-    space_id = Faker.String.base64()
-    token = Faker.String.base64()
-    content_types = CFSyncTest.Entries.mapping()
-    locale = Faker.String.base64(2)
-
-    start_server = fn opts ->
-      name = Keyword.get(opts, :name, name)
-      opts = opts ++ [locale: locale]
-      opts = Enum.uniq_by(opts, fn {k, _v} -> k end)
-      {:ok, pid} = Store.start_link(name, space_id, token, content_types, opts)
-
-      tick = fn ->
-        send(pid, :sync)
-      end
-
-      {pid, tick}
-    end
-
-    %{name: name, space_id: space_id, token: token, locale: locale, start_server: start_server}
-  end
-
-  test "start_link/2 starts the server", %{start_server: start_server} do
-    {pid, _tick} = start_server.(auto_tick: false)
+  test "It starts" do
+    pid = start_store(auto_tick: false)
     assert is_pid(pid)
     assert Process.alive?(pid)
   end
 
-  test "With auto_tick on, server syncs regularly", %{start_server: start_server} do
+  test "With auto_tick on, server syncs regularly" do
     parent = self()
 
-    {pid, _tick} = start_server.(initial_sync_interval: 10, delta_sync_interval: 10)
+    pid = start_store(initial_sync_interval: 10, delta_sync_interval: 10)
     allow(FakeHTTPClient, self(), pid)
 
     # Step 1, next page
@@ -83,17 +60,13 @@ defmodule CFSync.StoreTest do
     assert_receive {^step_ref_3, :temp}, 15
   end
 
-  test "Server sync pages, then deltas", %{
-    space_id: space_id,
-    token: token,
-    start_server: start_server
-  } do
+  test "Server sync pages, then deltas" do
     parent = self()
 
     next_sync_with = fn expected_url, ref, next_url, next_url_key ->
-      expect(FakeHTTPClient, :fetch, fn url, tok ->
+      expect(FakeHTTPClient, :fetch, fn url, token ->
         assert url == expected_url
-        assert token == tok
+        assert token == "a_delivery_token"
 
         send(parent, {ref, :temp})
 
@@ -101,16 +74,16 @@ defmodule CFSync.StoreTest do
       end)
     end
 
-    {pid, tick} = start_server.(auto_tick: false)
+    pid = start_store(auto_tick: false)
     allow(FakeHTTPClient, self(), pid)
 
     step_ref_1 = make_ref()
     url_1 = Faker.Internet.url()
 
-    initial_url = "https://cdn.contentful.com/spaces/#{space_id}/sync/?initial=true"
+    initial_url = "https://cdn.contentful.com/spaces/a_space_id/sync/?initial=true"
     next_sync_with.(initial_url, step_ref_1, url_1, "nextPageUrl")
 
-    tick.()
+    tick(pid)
     assert_receive {^step_ref_1, :temp}
 
     step_ref_2 = make_ref()
@@ -118,7 +91,7 @@ defmodule CFSync.StoreTest do
 
     next_sync_with.(url_1, step_ref_2, url_2, "nextSyncUrl")
 
-    tick.()
+    tick(pid)
     assert_receive {^step_ref_2, :temp}
 
     step_ref_3 = make_ref()
@@ -126,17 +99,15 @@ defmodule CFSync.StoreTest do
 
     next_sync_with.(url_2, step_ref_3, url_3, "nextSyncUrl")
 
-    tick.()
+    tick(pid)
     assert_receive {^step_ref_3, :temp}
   end
 
-  test "On sync error, server logs an error and stops", %{
-    start_server: start_server
-  } do
+  test "On sync error, server logs an error and stops" do
     parent = self()
 
     Process.flag(:trap_exit, true)
-    {pid, tick} = start_server.(auto_tick: false)
+    pid = start_store(auto_tick: false)
 
     step_ref_1 = make_ref()
 
@@ -151,7 +122,7 @@ defmodule CFSync.StoreTest do
       with_log(
         [level: :error],
         fn ->
-          tick.()
+          tick(pid)
           assert_receive {^step_ref_1, :temp}
           assert_receive({:EXIT, ^pid, _})
         end
@@ -161,13 +132,11 @@ defmodule CFSync.StoreTest do
     refute Process.alive?(pid)
   end
 
-  test "When rate limited, server stays alive", %{
-    start_server: start_server
-  } do
+  test "When rate limited, server stays alive" do
     parent = self()
 
     Process.flag(:trap_exit, true)
-    {pid, tick} = start_server.(auto_tick: false)
+    pid = start_store(auto_tick: false)
 
     step_ref_1 = make_ref()
 
@@ -178,18 +147,13 @@ defmodule CFSync.StoreTest do
 
     allow(FakeHTTPClient, self(), pid)
 
-    tick.()
+    tick(pid)
     assert_receive {^step_ref_1, :temp}
     refute_receive({:EXIT, ^pid, _}, 250)
-
     assert Process.alive?(pid)
   end
 
-  test "Server adds and remove entries and assets", %{
-    name: name,
-    locale: locale,
-    start_server: start_server
-  } do
+  test "Server adds and remove entries and assets" do
     parent = self()
 
     item = fn
@@ -197,10 +161,10 @@ defmodule CFSync.StoreTest do
         %{
           "sys" => %{"id" => id, "type" => type, "space" => %{"sys" => %{"id" => "anyspace"}}},
           "fields" => %{
-            "title" => %{locale => ""},
-            "description" => %{locale => ""},
+            "title" => %{"en_US" => ""},
+            "description" => %{"en_US" => ""},
             "file" => %{
-              locale => %{
+              "en_US" => %{
                 "contentType" => "",
                 "fileName" => "",
                 "url" => "",
@@ -229,7 +193,7 @@ defmodule CFSync.StoreTest do
         }
     end
 
-    {pid, tick} = start_server.(auto_tick: false)
+    pid = start_store(auto_tick: false)
     allow(FakeHTTPClient, self(), pid)
 
     sync_with = fn items ->
@@ -240,7 +204,7 @@ defmodule CFSync.StoreTest do
         {:ok, %{"nextSyncUrl" => "", "items" => items}}
       end)
 
-      tick.()
+      tick(pid)
       assert_receive {^ref, :temp}
 
       # Wait for an empty sync cycle to ensure :ets is synced
@@ -253,7 +217,7 @@ defmodule CFSync.StoreTest do
         {:ok, %{"nextSyncUrl" => "", "items" => []}}
       end)
 
-      tick.()
+      tick(pid)
       assert_receive {^ref, :temp}
     end
 
@@ -265,17 +229,17 @@ defmodule CFSync.StoreTest do
       item.(Asset, "4-upsert-asset", "Asset")
     ])
 
-    store = CFSync.from(name)
+    table_ref = Table.get_table_reference_for_name(__MODULE__.TestServer)
 
     assert [
-             %Entry{store: ^store, id: "1-upsert-entry"},
-             %Entry{store: ^store, id: "2-upsert-entry"}
-           ] = Table.get_entries(name) |> Enum.sort_by(& &1.id)
+             %Entry{store: ^table_ref, id: "1-upsert-entry"},
+             %Entry{store: ^table_ref, id: "2-upsert-entry"}
+           ] = Table.get_entries(table_ref, :en) |> Enum.sort_by(& &1.id)
 
     assert [
-             %Asset{store: ^store, id: "3-upsert-asset"},
-             %Asset{store: ^store, id: "4-upsert-asset"}
-           ] = Table.get_assets(name) |> Enum.sort_by(& &1.id)
+             %Asset{store: ^table_ref, id: "3-upsert-asset"},
+             %Asset{store: ^table_ref, id: "4-upsert-asset"}
+           ] = Table.get_assets(table_ref, :en) |> Enum.sort_by(& &1.id)
 
     #  Add some items should concat with previsou
     sync_with.([
@@ -290,14 +254,14 @@ defmodule CFSync.StoreTest do
              %Entry{id: "2-upsert-entry"},
              %Entry{id: "7-upsert-entry"},
              %Entry{id: "8-upsert-entry"}
-           ] = Table.get_entries(name) |> Enum.sort_by(& &1.id)
+           ] = Table.get_entries(table_ref, :en) |> Enum.sort_by(& &1.id)
 
     assert [
              %Asset{id: "3-upsert-asset"},
              %Asset{id: "4-upsert-asset"},
              %Asset{id: "5-upsert-asset"},
              %Asset{id: "6-upsert-asset"}
-           ] = Table.get_assets(name) |> Enum.sort_by(& &1.id)
+           ] = Table.get_assets(table_ref, :en) |> Enum.sort_by(& &1.id)
 
     #  Delete some items should keep other ones
     sync_with.([
@@ -310,12 +274,12 @@ defmodule CFSync.StoreTest do
     assert [
              %Entry{id: "2-upsert-entry"},
              %Entry{id: "7-upsert-entry"}
-           ] = Table.get_entries(name) |> Enum.sort_by(& &1.id)
+           ] = Table.get_entries(table_ref, :en) |> Enum.sort_by(& &1.id)
 
     assert [
              %Asset{id: "3-upsert-asset"},
              %Asset{id: "6-upsert-asset"}
-           ] = Table.get_assets(name) |> Enum.sort_by(& &1.id)
+           ] = Table.get_assets(table_ref, :en) |> Enum.sort_by(& &1.id)
 
     #  Delete remaining items to ensure we can empty the tables without crashing
     sync_with.([
@@ -325,9 +289,9 @@ defmodule CFSync.StoreTest do
       item.(Entry, "7-upsert-entry", "DeletedEntry")
     ])
 
-    assert [] = Table.get_entries(name) |> Enum.sort_by(& &1.id)
+    assert [] = Table.get_entries(table_ref, :en) |> Enum.sort_by(& &1.id)
 
-    assert [] = Table.get_assets(name) |> Enum.sort_by(& &1.id)
+    assert [] = Table.get_assets(table_ref, :en) |> Enum.sort_by(& &1.id)
 
     #  Delete inexistent items should not crash
     sync_with.([
@@ -337,9 +301,9 @@ defmodule CFSync.StoreTest do
       item.(Entry, "7-upsert-entry", "DeletedEntry")
     ])
 
-    assert [] = Table.get_entries(name) |> Enum.sort_by(& &1.id)
+    assert [] = Table.get_entries(table_ref, :en) |> Enum.sort_by(& &1.id)
 
-    assert [] = Table.get_assets(name) |> Enum.sort_by(& &1.id)
+    assert [] = Table.get_assets(table_ref, :en) |> Enum.sort_by(& &1.id)
 
     # The server should still be in a state where is accepts new items
     sync_with.([
@@ -352,18 +316,15 @@ defmodule CFSync.StoreTest do
     assert [
              %Entry{id: "1-upsert-entry"},
              %Entry{id: "2-upsert-entry"}
-           ] = Table.get_entries(name) |> Enum.sort_by(& &1.id)
+           ] = Table.get_entries(table_ref, :en) |> Enum.sort_by(& &1.id)
 
     assert [
              %Asset{id: "3-upsert-asset"},
              %Asset{id: "4-upsert-asset"}
-           ] = Table.get_assets(name) |> Enum.sort_by(& &1.id)
+           ] = Table.get_assets(table_ref, :en) |> Enum.sort_by(& &1.id)
   end
 
-  test "Server calls invalidation callbacks when needed", %{
-    locale: locale,
-    start_server: start_server
-  } do
+  test "Server calls invalidation callbacks when needed" do
     parent = self()
 
     item = fn
@@ -371,10 +332,10 @@ defmodule CFSync.StoreTest do
         %{
           "sys" => %{"id" => id, "type" => type, "space" => %{"sys" => %{"id" => "anyspace"}}},
           "fields" => %{
-            "title" => %{locale => ""},
-            "description" => %{locale => ""},
+            "title" => %{"en_US" => ""},
+            "description" => %{"en_US" => ""},
             "file" => %{
-              locale => %{
+              "en_US" => %{
                 "contentType" => "",
                 "fileName" => "",
                 "url" => "",
@@ -409,7 +370,7 @@ defmodule CFSync.StoreTest do
       send(parent, {invalidate_ref, :invalidation})
     end
 
-    {pid, tick} = start_server.(auto_tick: false, invalidation_callbacks: [invalidate])
+    pid = start_store(auto_tick: false, invalidation_callbacks: [invalidate])
     allow(FakeHTTPClient, self(), pid)
 
     sync_with = fn items ->
@@ -420,7 +381,7 @@ defmodule CFSync.StoreTest do
         {:ok, %{"nextSyncUrl" => "", "items" => items}}
       end)
 
-      tick.()
+      tick(pid)
       assert_receive {^ref, :temp}
     end
 
@@ -433,18 +394,13 @@ defmodule CFSync.StoreTest do
     refute_receive {^invalidate_ref, :invalidation}
   end
 
-  test "Server correctly handles force_sync", %{
-    name: name,
-    space_id: space_id,
-    token: token,
-    start_server: start_server
-  } do
+  test "Server correctly handles force_sync" do
     parent = self()
 
     next_sync_with = fn expected_url, ref, next_url, next_url_key ->
-      expect(FakeHTTPClient, :fetch, fn url, tok ->
+      expect(FakeHTTPClient, :fetch, fn url, token ->
         assert url == expected_url
-        assert token == tok
+        assert token == "a_delivery_token"
 
         send(parent, {ref, :temp})
 
@@ -452,14 +408,14 @@ defmodule CFSync.StoreTest do
       end)
     end
 
-    {pid, _tick} = start_server.(initial_sync_interval: 10, delta_sync_interval: 10)
+    pid = start_store(initial_sync_interval: 10, delta_sync_interval: 10)
     allow(FakeHTTPClient, self(), pid)
 
     # Step 1, next sync
     step_ref_1 = make_ref()
     url_1 = Faker.Internet.url()
 
-    initial_url = "https://cdn.contentful.com/spaces/#{space_id}/sync/?initial=true"
+    initial_url = "https://cdn.contentful.com/spaces/a_space_id/sync/?initial=true"
     next_sync_with.(initial_url, step_ref_1, url_1, "nextSyncUrl")
 
     assert_receive {^step_ref_1, :temp}, 15
@@ -469,7 +425,7 @@ defmodule CFSync.StoreTest do
     url_2 = Faker.Internet.url()
 
     next_sync_with.(url_1, step_ref_2, url_2, "nextSyncUrl")
-    CFSync.force_sync(name)
+    Store.force_sync(__MODULE__.TestServer)
     assert_receive {^step_ref_2, :temp}, 2
 
     # Step 3, next sync
@@ -479,5 +435,24 @@ defmodule CFSync.StoreTest do
 
     refute_receive {^step_ref_3, :temp}, 7
     assert_receive {^step_ref_3, :temp}, 4
+  end
+
+  defp start_store(opts) do
+    opts =
+      Keyword.merge(
+        [
+          name: __MODULE__.TestServer,
+          space_id: "a_space_id",
+          delivery_token: "a_delivery_token",
+          content_types: CFSyncTest.Entries.mapping()
+        ],
+        opts
+      )
+
+    start_link_supervised!({Store, opts})
+  end
+
+  defp tick(pid) do
+    send(pid, :sync)
   end
 end

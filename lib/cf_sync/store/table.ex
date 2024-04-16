@@ -64,18 +64,18 @@ defmodule CFSync.Store.Table do
     end
   end
 
-  @spec get_assets(:ets.tid()) :: list
-  def get_assets(ref) do
-    records = :ets.match_object(ref, {{:asset, :_}, :_, :_})
+  @spec get_assets(:ets.tid(), atom()) :: list
+  def get_assets(ref, locale) do
+    records = :ets.match_object(ref, {{:asset, :_, locale}, :_, :_})
 
     for {_key, _content_type, asset} <- records do
       asset
     end
   end
 
-  @spec get_entries(:ets.tid()) :: list
-  def get_entries(ref) do
-    records = :ets.match_object(ref, {{:entry, :_}, :_, :_})
+  @spec get_entries(:ets.tid(), atom()) :: list
+  def get_entries(ref, locale) do
+    records = :ets.match_object(ref, {{:entry, :_, locale}, :_, :_})
 
     for {_key, _content_type, entry} <- records do
       entry
