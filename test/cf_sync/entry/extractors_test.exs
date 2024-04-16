@@ -10,43 +10,43 @@ defmodule CFSync.Entry.ExtractorsTest do
       # {function name, valid value fn, invalid value fn}
       {
         :extract_binary,
-        fn -> Faker.String.base64(8) end,
-        fn -> Faker.random_between(0, 1000) end
+        fn _store -> Faker.String.base64(8) end,
+        fn _store -> Faker.random_between(0, 1000) end
       },
       {
         :extract_boolean,
-        fn -> Enum.random([true, false]) end,
-        fn -> Faker.random_between(0, 1000) end
+        fn _store -> Enum.random([true, false]) end,
+        fn _store -> Faker.random_between(0, 1000) end
       },
       {
         :extract_number,
-        fn -> Faker.random_between(0, 1000) end,
-        fn -> Faker.String.base64(8) end
+        fn _store -> Faker.random_between(0, 1000) end,
+        fn _store -> Faker.String.base64(8) end
       },
       {
         :extract_number,
-        fn -> Faker.random_between(0, 1000) / 100 end,
-        fn -> Faker.String.base64(8) end
+        fn _store -> Faker.random_between(0, 1000) / 100 end,
+        fn _store -> Faker.String.base64(8) end
       },
       {
         :extract_date,
-        fn ->
+        fn _store ->
           date = Faker.Date.between(~D[0001-01-01], ~D[3000-01-01])
           {Date.to_iso8601(date), date}
         end,
-        fn -> Faker.String.base64(5) end
+        fn _store -> Faker.String.base64(5) end
       },
       {
         :extract_datetime,
-        fn ->
+        fn _store ->
           date = Faker.DateTime.between(~N[0001-01-01 00:00:00], ~N[3000-01-01 00:00:00])
           {DateTime.to_iso8601(date), date}
         end,
-        fn -> Faker.String.base64(5) end
+        fn _store -> Faker.String.base64(5) end
       },
       {
         :extract_map,
-        fn ->
+        fn _store ->
           %{
             Faker.String.base64(1) => Faker.random_between(0, 1000),
             Faker.String.base64(2) => Faker.String.base64(5),
@@ -60,11 +60,11 @@ defmodule CFSync.Entry.ExtractorsTest do
             ]
           }
         end,
-        fn -> Faker.String.base64(8) end
+        fn _store -> Faker.String.base64(8) end
       },
       {
         :extract_list,
-        fn ->
+        fn _store ->
           [
             Faker.random_between(0, 1000),
             Faker.String.base64(5),
@@ -78,11 +78,11 @@ defmodule CFSync.Entry.ExtractorsTest do
             ]
           ]
         end,
-        fn -> Faker.String.base64(8) end
+        fn _store -> Faker.String.base64(8) end
       },
       {
         :extract_link,
-        fn ->
+        fn store ->
           value = %{
             "sys" => %{
               "linkType" => Enum.random(["Asset", "Entry"]),
@@ -90,14 +90,14 @@ defmodule CFSync.Entry.ExtractorsTest do
             }
           }
 
-          expected_value = CFSync.Link.new(value)
+          expected_value = CFSync.Link.new(value, store)
           {value, expected_value}
         end,
-        fn -> Faker.String.base64(8) end
+        fn _store -> Faker.String.base64(8) end
       },
       {
         :extract_link,
-        fn ->
+        fn store ->
           value = %{
             "sys" => %{
               "linkType" => Enum.random(["Asset", "Entry"]),
@@ -105,14 +105,14 @@ defmodule CFSync.Entry.ExtractorsTest do
             }
           }
 
-          expected_value = CFSync.Link.new(value)
+          expected_value = CFSync.Link.new(value, store)
           {value, expected_value}
         end,
-        fn -> %{} end
+        fn _store -> %{} end
       },
       {
         :extract_links,
-        fn ->
+        fn store ->
           value = [
             %{
               "sys" => %{
@@ -134,14 +134,14 @@ defmodule CFSync.Entry.ExtractorsTest do
             }
           ]
 
-          expected_value = Enum.map(value, &CFSync.Link.new(&1))
+          expected_value = Enum.map(value, &CFSync.Link.new(&1, store))
           {value, expected_value}
         end,
-        fn -> Faker.String.base64(8) end
+        fn _store -> Faker.String.base64(8) end
       },
       {
         :extract_links,
-        fn ->
+        fn store ->
           value = [
             %{
               "sys" => %{
@@ -152,14 +152,14 @@ defmodule CFSync.Entry.ExtractorsTest do
             %{"invalid" => "link"}
           ]
 
-          expected_value = [value |> List.first() |> CFSync.Link.new()]
+          expected_value = [value |> List.first() |> CFSync.Link.new(store)]
           {value, expected_value}
         end,
-        fn -> Faker.String.base64(8) end
+        fn _store -> Faker.String.base64(8) end
       },
       {
         :extract_rich_text,
-        fn ->
+        fn _store ->
           value = %{
             "nodeType" => "document",
             "content" => []
@@ -168,7 +168,7 @@ defmodule CFSync.Entry.ExtractorsTest do
           expected_value = CFSync.RichText.new(:empty)
           {value, expected_value}
         end,
-        fn -> Faker.String.base64(8) end
+        fn _store -> Faker.String.base64(8) end
       }
     ]
 
@@ -178,7 +178,7 @@ defmodule CFSync.Entry.ExtractorsTest do
       store = make_ref()
 
       {value, expected_value} =
-        case value_fun.() do
+        case value_fun.(store) do
           {value, expected_value} -> {value, expected_value}
           value -> {value, value}
         end
@@ -265,10 +265,7 @@ defmodule CFSync.Entry.ExtractorsTest do
       value => atom
     }
 
-    {name, expected_value, data} =
-      build.(fn ->
-        {value, atom}
-      end)
+    {name, expected_value, data} = build.(fn _store -> {value, atom} end)
 
     assert Extractors.extract_atom(data, name, mapping) == expected_value
   end
@@ -283,7 +280,7 @@ defmodule CFSync.Entry.ExtractorsTest do
 
       unmapped_value = Faker.String.base64(8)
 
-      {name, _expected_value, data} = build.(fn -> unmapped_value end)
+      {name, _expected_value, data} = build.(fn _store -> unmapped_value end)
 
       assert Extractors.extract_atom(data, name, mapping) == nil
     end
@@ -295,7 +292,7 @@ defmodule CFSync.Entry.ExtractorsTest do
       value = Faker.String.base64(8)
       mapping = %{value => atom}
 
-      {name, _expected_value, data} = build.(fn -> value end)
+      {name, _expected_value, data} = build.(fn _store -> value end)
 
       invalid_name = "err_" <> name
       assert Extractors.extract_atom(data, invalid_name, mapping) == nil
@@ -313,7 +310,7 @@ defmodule CFSync.Entry.ExtractorsTest do
       default_value = Faker.String.base64(8)
       unmapped_value = Faker.String.base64(8)
 
-      {name, _expected_value, data} = build.(fn -> unmapped_value end)
+      {name, _expected_value, data} = build.(fn _store -> unmapped_value end)
 
       assert Extractors.extract_atom(data, name, mapping, default_value) ==
                default_value
@@ -328,7 +325,7 @@ defmodule CFSync.Entry.ExtractorsTest do
 
       mapping = %{value => atom}
 
-      {name, _expected_value, data} = build.(fn -> value end)
+      {name, _expected_value, data} = build.(fn _store -> value end)
 
       invalid_name = "err_" <> name
 
@@ -344,7 +341,7 @@ defmodule CFSync.Entry.ExtractorsTest do
     fun = fn v -> {:processed, v} end
 
     {name, expected_value, data} =
-      build.(fn ->
+      build.(fn _store ->
         {value, {:processed, value}}
       end)
 
@@ -357,7 +354,7 @@ defmodule CFSync.Entry.ExtractorsTest do
     value = Faker.String.base64(8)
     fun = fn v -> {:processed, v} end
 
-    {name, _expected_value, data} = build.(fn -> value end)
+    {name, _expected_value, data} = build.(fn _store -> value end)
 
     invalid_name = "err_" <> name
     assert Extractors.extract_custom(data, invalid_name, fun) == {:processed, nil}
