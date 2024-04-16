@@ -97,6 +97,14 @@ defmodule CFSync.Store.TableTest do
       assert [{_, _, ^asset_2}] = :ets.lookup(reference, {:asset, asset_2.id, nil})
       assert [] = :ets.lookup(reference, {:asset, asset_1.id, nil})
     end
+
+    test "get_link_target/1 returns entry from table" do
+      reference = create_table()
+      entry = create_page_entry(locale: nil)
+      Table.put(reference, entry)
+      link = %CFSync.Link{store: reference, type: :entry, id: entry.id, locale: nil}
+      assert Table.get_link_target(link) == entry
+    end
   end
 
   describe "With locales" do
@@ -193,6 +201,18 @@ defmodule CFSync.Store.TableTest do
       assert [{_, _, ^asset_fr2}] = :ets.lookup(reference, {:asset, asset_fr2.id, :fr})
       assert [{_, _, ^asset_pl1}] = :ets.lookup(reference, {:asset, asset_pl1.id, :pl})
       assert [] = :ets.lookup(reference, {:asset, asset_fr1.id, :fr})
+    end
+
+    test "get_link_target/1 returns entry from table" do
+      reference = create_table()
+      entry_en = create_page_entry(locale: :en)
+      entry_fr = %{entry_en | locale: :fr}
+      Table.put(reference, entry_en)
+      Table.put(reference, entry_fr)
+      link_en = %CFSync.Link{store: reference, type: :entry, id: entry_en.id, locale: :en}
+      link_fr = %CFSync.Link{store: reference, type: :entry, id: entry_fr.id, locale: :fr}
+      assert Table.get_link_target(link_en) == entry_en
+      assert Table.get_link_target(link_fr) == entry_fr
     end
   end
 

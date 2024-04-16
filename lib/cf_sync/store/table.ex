@@ -91,14 +91,14 @@ defmodule CFSync.Store.Table do
     end
   end
 
-  # @spec get_link_target(:ets.tid(), Link.t()) :: nil | Entry.t() | Asset.t()
-  # def get_link_target(store, %Link{type: :entry, id: id}) do
-  #   # get_entry(store, id)
-  # end
+  @spec get_link_target(Link.t()) :: nil | Entry.t() | Asset.t()
+  def get_link_target(%Link{store: store, type: :entry, id: id, locale: locale}) do
+    get_entry(store, id, locale)
+  end
 
-  # def get_link_target(store, %Link{type: :asset, id: id}) do
-  #   # get_asset(store, id)
-  # end
+  def get_link_target(%Link{store: store, type: :asset, id: id, locale: locale}) do
+    get_asset(store, id, locale)
+  end
 
   @spec delete_entry(:ets.tid(), binary(), atom()) :: true
   def delete_entry(ref, entry_id, entry_locale) do
