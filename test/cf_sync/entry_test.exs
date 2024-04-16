@@ -61,7 +61,8 @@ defmodule CFSync.EntryTest do
     assert data_arg == %{
              store: store,
              fields: %{"name" => %{"en_US" => "A name"}},
-             locale: "en_US"
+             cf_locale: "en_US",
+             locale: :en
            }
   end
 
