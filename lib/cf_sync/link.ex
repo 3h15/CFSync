@@ -10,22 +10,27 @@ defmodule CFSync.Link do
 
   Links can be resolved through `CFSync.get_link_target/2`.
   """
-  @enforce_keys [:type, :id]
+  @enforce_keys [:store, :type, :id]
 
-  defstruct [:type, :id]
+  defstruct [:store, :type, :id]
 
   @type t :: %__MODULE__{
+          store: CFSync.store(),
           type: :asset | :entry,
           id: binary()
         }
 
-  def new(%{
-        "sys" => %{
-          "linkType" => type,
-          "id" => id
-        }
-      }) do
+  def new(
+        %{
+          "sys" => %{
+            "linkType" => type,
+            "id" => id
+          }
+        },
+        store
+      ) do
     %__MODULE__{
+      store: store,
       type: type(type),
       id: id
     }

@@ -6,18 +6,19 @@ defmodule CFSync.LinkTest do
   alias CFSync.Link
 
   test "new/1 Creates a new asset link" do
-    target_id = Faker.String.base64()
-
     data = %{
       "sys" => %{
         "linkType" => "Asset",
-        "id" => target_id
+        "id" => "ZYXWVU"
       }
     }
 
+    store = make_ref()
+
     assert %Link{
+             store: ^store,
              type: :asset,
-             id: ^target_id
-           } = Link.new(data)
+             id: "ZYXWVU"
+           } = Link.new(data, store)
   end
 end
