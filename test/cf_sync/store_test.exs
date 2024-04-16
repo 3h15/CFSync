@@ -234,12 +234,12 @@ defmodule CFSync.StoreTest do
     assert [
              %Entry{store: ^table_ref, id: "1-upsert-entry"},
              %Entry{store: ^table_ref, id: "2-upsert-entry"}
-           ] = Table.get_entries(table_ref, :en) |> Enum.sort_by(& &1.id)
+           ] = Table.get_entries(table_ref, nil) |> Enum.sort_by(& &1.id)
 
     assert [
              %Asset{store: ^table_ref, id: "3-upsert-asset"},
              %Asset{store: ^table_ref, id: "4-upsert-asset"}
-           ] = Table.get_assets(table_ref, :en) |> Enum.sort_by(& &1.id)
+           ] = Table.get_assets(table_ref, nil) |> Enum.sort_by(& &1.id)
 
     #  Add some items should concat with previsou
     sync_with.([
@@ -254,14 +254,14 @@ defmodule CFSync.StoreTest do
              %Entry{id: "2-upsert-entry"},
              %Entry{id: "7-upsert-entry"},
              %Entry{id: "8-upsert-entry"}
-           ] = Table.get_entries(table_ref, :en) |> Enum.sort_by(& &1.id)
+           ] = Table.get_entries(table_ref, nil) |> Enum.sort_by(& &1.id)
 
     assert [
              %Asset{id: "3-upsert-asset"},
              %Asset{id: "4-upsert-asset"},
              %Asset{id: "5-upsert-asset"},
              %Asset{id: "6-upsert-asset"}
-           ] = Table.get_assets(table_ref, :en) |> Enum.sort_by(& &1.id)
+           ] = Table.get_assets(table_ref, nil) |> Enum.sort_by(& &1.id)
 
     #  Delete some items should keep other ones
     sync_with.([
@@ -274,12 +274,12 @@ defmodule CFSync.StoreTest do
     assert [
              %Entry{id: "2-upsert-entry"},
              %Entry{id: "7-upsert-entry"}
-           ] = Table.get_entries(table_ref, :en) |> Enum.sort_by(& &1.id)
+           ] = Table.get_entries(table_ref, nil) |> Enum.sort_by(& &1.id)
 
     assert [
              %Asset{id: "3-upsert-asset"},
              %Asset{id: "6-upsert-asset"}
-           ] = Table.get_assets(table_ref, :en) |> Enum.sort_by(& &1.id)
+           ] = Table.get_assets(table_ref, nil) |> Enum.sort_by(& &1.id)
 
     #  Delete remaining items to ensure we can empty the tables without crashing
     sync_with.([
@@ -289,9 +289,9 @@ defmodule CFSync.StoreTest do
       item.(Entry, "7-upsert-entry", "DeletedEntry")
     ])
 
-    assert [] = Table.get_entries(table_ref, :en) |> Enum.sort_by(& &1.id)
+    assert [] = Table.get_entries(table_ref, nil) |> Enum.sort_by(& &1.id)
 
-    assert [] = Table.get_assets(table_ref, :en) |> Enum.sort_by(& &1.id)
+    assert [] = Table.get_assets(table_ref, nil) |> Enum.sort_by(& &1.id)
 
     #  Delete inexistent items should not crash
     sync_with.([
@@ -301,9 +301,9 @@ defmodule CFSync.StoreTest do
       item.(Entry, "7-upsert-entry", "DeletedEntry")
     ])
 
-    assert [] = Table.get_entries(table_ref, :en) |> Enum.sort_by(& &1.id)
+    assert [] = Table.get_entries(table_ref, nil) |> Enum.sort_by(& &1.id)
 
-    assert [] = Table.get_assets(table_ref, :en) |> Enum.sort_by(& &1.id)
+    assert [] = Table.get_assets(table_ref, nil) |> Enum.sort_by(& &1.id)
 
     # The server should still be in a state where is accepts new items
     sync_with.([
@@ -316,12 +316,12 @@ defmodule CFSync.StoreTest do
     assert [
              %Entry{id: "1-upsert-entry"},
              %Entry{id: "2-upsert-entry"}
-           ] = Table.get_entries(table_ref, :en) |> Enum.sort_by(& &1.id)
+           ] = Table.get_entries(table_ref, nil) |> Enum.sort_by(& &1.id)
 
     assert [
              %Asset{id: "3-upsert-asset"},
              %Asset{id: "4-upsert-asset"}
-           ] = Table.get_assets(table_ref, :en) |> Enum.sort_by(& &1.id)
+           ] = Table.get_assets(table_ref, nil) |> Enum.sort_by(& &1.id)
   end
 
   test "Server calls invalidation callbacks when needed" do
