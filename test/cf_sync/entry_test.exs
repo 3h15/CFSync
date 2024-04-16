@@ -8,9 +8,6 @@ defmodule CFSync.EntryTest do
   import ExUnit.CaptureLog
 
   defmodule Page do
-    import CFSync.Entry.Extractors
-    @behaviour Entry.Fields
-
     defstruct [
       :data_arg
     ]

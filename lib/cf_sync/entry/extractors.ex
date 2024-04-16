@@ -10,7 +10,11 @@ defmodule CFSync.Entry.Extractors do
   @typedoc """
   Entry's payload as provided to `c:CFSync.Entry.Fields.new/1`
   """
-  @opaque data() :: {map, binary}
+  @opaque data() :: %{
+            fields: map(),
+            locale: String.t(),
+            store: CFSync.store()
+          }
 
   @doc """
   Returns value of `field_name` as a `binary`.
