@@ -153,7 +153,7 @@ defmodule CFSync.StoreTest do
     assert Process.alive?(pid)
   end
 
-  test "Server adds and remove entries and assets" do
+  test "Server adds and remove entries and assets from multiple locales" do
     parent = self()
 
     item = fn
@@ -161,8 +161,8 @@ defmodule CFSync.StoreTest do
         %{
           "sys" => %{"id" => id, "type" => type, "space" => %{"sys" => %{"id" => "anyspace"}}},
           "fields" => %{
-            "title" => %{"en_US" => ""},
-            "description" => %{"en_US" => ""},
+            "title" => %{},
+            "description" => %{},
             "file" => %{
               "en_US" => %{
                 "contentType" => "",
@@ -193,7 +193,7 @@ defmodule CFSync.StoreTest do
         }
     end
 
-    pid = start_store(auto_tick: false)
+    pid = start_store(auto_tick: false, locales: [en: "en_US", fr: "fr_FR"])
     allow(FakeHTTPClient, self(), pid)
 
     sync_with = fn items ->
@@ -232,14 +232,24 @@ defmodule CFSync.StoreTest do
     table_ref = Table.get_table_reference_for_name(__MODULE__.TestServer)
 
     assert [
-             %Entry{store: ^table_ref, id: "1-upsert-entry"},
-             %Entry{store: ^table_ref, id: "2-upsert-entry"}
-           ] = Table.get_entries(table_ref, nil) |> Enum.sort_by(& &1.id)
+             %Entry{store: ^table_ref, id: "1-upsert-entry", locale: :en},
+             %Entry{store: ^table_ref, id: "2-upsert-entry", locale: :en}
+           ] = Table.get_entries(table_ref, :en) |> Enum.sort_by(& &1.id)
 
     assert [
-             %Asset{store: ^table_ref, id: "3-upsert-asset"},
-             %Asset{store: ^table_ref, id: "4-upsert-asset"}
-           ] = Table.get_assets(table_ref, nil) |> Enum.sort_by(& &1.id)
+             %Entry{store: ^table_ref, id: "1-upsert-entry", locale: :fr},
+             %Entry{store: ^table_ref, id: "2-upsert-entry", locale: :fr}
+           ] = Table.get_entries(table_ref, :fr) |> Enum.sort_by(& &1.id)
+
+    assert [
+             %Asset{store: ^table_ref, id: "3-upsert-asset", locale: :en},
+             %Asset{store: ^table_ref, id: "4-upsert-asset", locale: :en}
+           ] = Table.get_assets(table_ref, :en) |> Enum.sort_by(& &1.id)
+
+    assert [
+             %Asset{store: ^table_ref, id: "3-upsert-asset", locale: :fr},
+             %Asset{store: ^table_ref, id: "4-upsert-asset", locale: :fr}
+           ] = Table.get_assets(table_ref, :fr) |> Enum.sort_by(& &1.id)
 
     #  Add some items should concat with previsou
     sync_with.([
@@ -254,14 +264,14 @@ defmodule CFSync.StoreTest do
              %Entry{id: "2-upsert-entry"},
              %Entry{id: "7-upsert-entry"},
              %Entry{id: "8-upsert-entry"}
-           ] = Table.get_entries(table_ref, nil) |> Enum.sort_by(& &1.id)
+           ] = Table.get_entries(table_ref, :en) |> Enum.sort_by(& &1.id)
 
     assert [
              %Asset{id: "3-upsert-asset"},
              %Asset{id: "4-upsert-asset"},
              %Asset{id: "5-upsert-asset"},
              %Asset{id: "6-upsert-asset"}
-           ] = Table.get_assets(table_ref, nil) |> Enum.sort_by(& &1.id)
+           ] = Table.get_assets(table_ref, :en) |> Enum.sort_by(& &1.id)
 
     #  Delete some items should keep other ones
     sync_with.([
@@ -274,12 +284,12 @@ defmodule CFSync.StoreTest do
     assert [
              %Entry{id: "2-upsert-entry"},
              %Entry{id: "7-upsert-entry"}
-           ] = Table.get_entries(table_ref, nil) |> Enum.sort_by(& &1.id)
+           ] = Table.get_entries(table_ref, :en) |> Enum.sort_by(& &1.id)
 
     assert [
              %Asset{id: "3-upsert-asset"},
              %Asset{id: "6-upsert-asset"}
-           ] = Table.get_assets(table_ref, nil) |> Enum.sort_by(& &1.id)
+           ] = Table.get_assets(table_ref, :en) |> Enum.sort_by(& &1.id)
 
     #  Delete remaining items to ensure we can empty the tables without crashing
     sync_with.([
@@ -289,9 +299,11 @@ defmodule CFSync.StoreTest do
       item.(Entry, "7-upsert-entry", "DeletedEntry")
     ])
 
-    assert [] = Table.get_entries(table_ref, nil) |> Enum.sort_by(& &1.id)
+    assert [] = Table.get_entries(table_ref, :en) |> Enum.sort_by(& &1.id)
+    assert [] = Table.get_assets(table_ref, :en) |> Enum.sort_by(& &1.id)
 
-    assert [] = Table.get_assets(table_ref, nil) |> Enum.sort_by(& &1.id)
+    assert [] = Table.get_entries(table_ref, :fr) |> Enum.sort_by(& &1.id)
+    assert [] = Table.get_assets(table_ref, :fr) |> Enum.sort_by(& &1.id)
 
     #  Delete inexistent items should not crash
     sync_with.([
@@ -301,9 +313,11 @@ defmodule CFSync.StoreTest do
       item.(Entry, "7-upsert-entry", "DeletedEntry")
     ])
 
-    assert [] = Table.get_entries(table_ref, nil) |> Enum.sort_by(& &1.id)
+    assert [] = Table.get_entries(table_ref, :en) |> Enum.sort_by(& &1.id)
+    assert [] = Table.get_assets(table_ref, :en) |> Enum.sort_by(& &1.id)
 
-    assert [] = Table.get_assets(table_ref, nil) |> Enum.sort_by(& &1.id)
+    assert [] = Table.get_entries(table_ref, :fr) |> Enum.sort_by(& &1.id)
+    assert [] = Table.get_assets(table_ref, :fr) |> Enum.sort_by(& &1.id)
 
     # The server should still be in a state where is accepts new items
     sync_with.([
@@ -316,12 +330,22 @@ defmodule CFSync.StoreTest do
     assert [
              %Entry{id: "1-upsert-entry"},
              %Entry{id: "2-upsert-entry"}
-           ] = Table.get_entries(table_ref, nil) |> Enum.sort_by(& &1.id)
+           ] = Table.get_entries(table_ref, :en) |> Enum.sort_by(& &1.id)
 
     assert [
              %Asset{id: "3-upsert-asset"},
              %Asset{id: "4-upsert-asset"}
-           ] = Table.get_assets(table_ref, nil) |> Enum.sort_by(& &1.id)
+           ] = Table.get_assets(table_ref, :en) |> Enum.sort_by(& &1.id)
+
+    assert [
+             %Entry{id: "1-upsert-entry"},
+             %Entry{id: "2-upsert-entry"}
+           ] = Table.get_entries(table_ref, :fr) |> Enum.sort_by(& &1.id)
+
+    assert [
+             %Asset{id: "3-upsert-asset"},
+             %Asset{id: "4-upsert-asset"}
+           ] = Table.get_assets(table_ref, :fr) |> Enum.sort_by(& &1.id)
   end
 
   test "Server calls invalidation callbacks when needed" do

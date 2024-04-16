@@ -162,26 +162,26 @@ defmodule CFSync.Store do
          %{
            table_reference: store,
            content_types: content_types,
-           main_locale: main_locale,
+           #  main_locale: main_locale,
            locales: locales
          } = state,
          %SyncPayload{deltas: deltas}
        ) do
-    for delta <- deltas do
+    for delta <- deltas, locale_config = {locale, _cf_locale} <- locales do
       case delta do
         {:upsert_asset, item} ->
-          asset = Asset.new(item, {main_locale, locales[main_locale]}, store)
-          Table.put(state.table_reference, asset)
+          asset = Asset.new(item, locale_config, store)
+          Table.put(store, asset)
 
         {:upsert_entry, item} ->
-          entry = Entry.new(item, content_types, {main_locale, locales[main_locale]}, store)
-          Table.put(state.table_reference, entry)
+          entry = Entry.new(item, content_types, locale_config, store)
+          Table.put(store, entry)
 
         {:delete_asset, asset_id} ->
-          Table.delete_asset(state.table_reference, asset_id, main_locale)
+          Table.delete_asset(store, asset_id, locale)
 
         {:delete_entry, entry_id} ->
-          Table.delete_entry(state.table_reference, entry_id, main_locale)
+          Table.delete_entry(store, entry_id, locale)
       end
     end
 
