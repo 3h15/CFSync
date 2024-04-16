@@ -61,19 +61,19 @@ defmodule CFSync.RichText do
           rowspan: integer()
         }
 
-  @spec new(:empty | map, CFSync.store()) :: t()
-  def new(data, store) when is_map(data) do
+  @spec new(:empty | map, CFSync.store(), atom()) :: t()
+  def new(data, store, locale) when is_map(data) do
     create(data)
-    |> maybe_add_content(data, store)
+    |> maybe_add_content(data, store, locale)
     |> maybe_add_value(data)
     |> maybe_add_marks(data)
-    |> maybe_add_target(data, store)
+    |> maybe_add_target(data, store, locale)
     |> maybe_add_uri(data)
     |> maybe_add_colspan(data)
     |> maybe_add_rowspan(data)
   end
 
-  def new(:empty, _store), do: new(:empty)
+  def new(:empty, _store, _locale), do: new(:empty)
 
   def new(:empty) do
     create(%{
@@ -84,15 +84,15 @@ defmodule CFSync.RichText do
 
   defp create(data), do: %__MODULE__{type: type(data)}
 
-  defp maybe_add_content(node, %{"content" => content}, store) when is_list(content),
-    do: %__MODULE__{node | content: Enum.map(content, &new(&1, store))}
+  defp maybe_add_content(node, %{"content" => content}, store, locale) when is_list(content),
+    do: %__MODULE__{node | content: Enum.map(content, &new(&1, store, locale))}
 
-  defp maybe_add_content(node, _data, _store), do: node
+  defp maybe_add_content(node, _data, _store, _locale), do: node
 
-  defp maybe_add_target(node, %{"data" => %{"target" => link_data}}, store),
-    do: %__MODULE__{node | target: Link.new(link_data, store)}
+  defp maybe_add_target(node, %{"data" => %{"target" => link_data}}, store, locale),
+    do: %__MODULE__{node | target: Link.new(link_data, store, locale)}
 
-  defp maybe_add_target(node, _data, _store), do: node
+  defp maybe_add_target(node, _data, _store, _locale), do: node
 
   defp maybe_add_uri(node, %{"data" => %{"uri" => uri}}) when is_binary(uri),
     do: %__MODULE__{node | uri: uri}
