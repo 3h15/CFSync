@@ -25,7 +25,13 @@ defmodule CFSyncTest.Integration.CFSyncTest do
     content_types = CFSyncTest.Entries.mapping()
 
     {:ok, pid} =
-      start_link(IntegrationTestServer, space_id, token, content_types, auto_tick: false)
+      start_link(
+        name: IntegrationTestServer,
+        space_id: space_id,
+        delivery_token: token,
+        content_types: content_types,
+        auto_tick: false
+      )
 
     allow(FakeHTTPoison, self(), pid)
     allow(FakeHTTPClient, self(), pid)
@@ -47,7 +53,10 @@ defmodule CFSyncTest.Integration.CFSyncTest do
     deneb = get_entry(store, "3hOhfoV5IefhWp2uwq17YW")
 
     assert %Entry{
+             store: ^store,
              content_type: :page,
+             id: "ygP74CyESVFcDpJojH0tT",
+             locale: nil,
              fields: %{
                name: "My page",
                boolean: false,
@@ -75,8 +84,11 @@ defmodule CFSyncTest.Integration.CFSyncTest do
            } = page
 
     assert %Asset{
+             store: ^store,
+             id: "5m9oC9bksUxeHqVZXuWk8V",
              title: "One",
              description: "One asset",
+             locale: nil,
              content_type: "image/jpeg",
              file_name: "one.jpg",
              url:
@@ -86,8 +98,8 @@ defmodule CFSyncTest.Integration.CFSyncTest do
              size: 6_568_275
            } = one
 
-    assert get_link_target(store, page.fields.one_asset) == one
-    assert get_link_target(store, List.first(page.fields.many_links)) == altair
+    assert get_link_target(page.fields.one_asset) == one
+    assert get_link_target(List.first(page.fields.many_links)) == altair
 
     assert get_child(page, :one_asset) == one
     assert get_children(page, :many_links) == [altair, tarazed, capella, eltanin, deneb]
@@ -168,7 +180,12 @@ defmodule CFSyncTest.Integration.CFSyncTest do
   test "Integration - dump file" do
     content_types = CFSyncTest.Entries.mapping()
 
-    {:ok, _pid} = start_link(IntegrationTestServer, "", "", content_types, use_dump_file: true)
+    {:ok, _pid} =
+      start_link(
+        name: IntegrationTestServer,
+        content_types: content_types,
+        use_dump_file: true
+      )
 
     store = from(IntegrationTestServer)
 

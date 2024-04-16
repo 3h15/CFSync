@@ -134,14 +134,8 @@ defmodule CFSync do
   be called after each sync operation that actually adds, updates or deletes some entries.
 
   """
-  @spec start_link(atom, String.t(), String.t(), map, keyword) ::
-          :ignore | {:error, any} | {:ok, pid}
-  def start_link(name, space_id, delivery_token, content_types, opts)
-      when is_atom(name) and
-             is_binary(space_id) and
-             is_binary(delivery_token) and
-             is_list(opts),
-      do: Store.start_link(name, space_id, delivery_token, content_types, opts)
+  @spec start_link(keyword) :: :ignore | {:error, any} | {:ok, pid}
+  def start_link(opts), do: Store.start_link(opts)
 
   @doc """
   Forces the store for `name` to sync immediately. Use the name you provided to `start_link/4`.
@@ -186,51 +180,53 @@ defmodule CFSync do
   consider using something like [memoize](https://hexdocs.pm/memoize/Memoize.html)
   to cache the results.
   """
-  @spec get_entries(store()) :: [Entry.t()]
-  def get_entries(store) when not is_atom(store), do: Store.Table.get_entries(store)
+  @spec get_entries(store(), atom) :: [Entry.t()]
+  def get_entries(store, locale \\ nil) when not is_atom(store),
+    do: Store.Table.get_entries(store, locale)
 
   @doc """
   Returns a list containg all entries of specified `content_type` from the CFSync store `store`.
 
   See `get_entries/1` about performance.
   """
-  @spec get_entries_for_content_type(store(), atom) :: [Entry.t()]
-  def get_entries_for_content_type(store, content_type)
+  @spec get_entries_for_content_type(store(), atom, atom) :: [Entry.t()]
+  def get_entries_for_content_type(store, content_type, locale \\ nil)
       when not is_atom(store) and is_atom(content_type),
-      do: Store.Table.get_entries_for_content_type(store, content_type)
+      do: Store.Table.get_entries_for_content_type(store, content_type, locale)
 
   @doc """
   Get the entry specified by `id` from the CFSync store `store`.
   """
-  @spec get_entry(store(), binary) :: nil | Entry.t()
-  def get_entry(store, id) when not is_atom(store) and is_binary(id),
-    do: Store.Table.get_entry(store, id)
+  @spec get_entry(store(), binary, atom) :: nil | Entry.t()
+  def get_entry(store, id, locale \\ nil) when not is_atom(store) and is_binary(id),
+    do: Store.Table.get_entry(store, id, locale)
 
   @doc """
   Returns a list containg all assets from the CFSync store `store`.
 
   See `get_entries/1` about performance.
   """
-  @spec get_assets(store()) :: [Asset.t()]
-  def get_assets(store) when not is_atom(store), do: Store.Table.get_assets(store)
+  @spec get_assets(store(), atom) :: [Asset.t()]
+  def get_assets(store, locale \\ nil) when not is_atom(store),
+    do: Store.Table.get_assets(store, locale)
 
   @doc """
   Get the asset specified by `id` from the CFSync store `store`.
 
   Returns `nil` if the asset is not found.
   """
-  @spec get_asset(store(), binary) :: nil | Asset.t()
-  def get_asset(store, id) when not is_atom(store) and is_binary(id),
-    do: Store.Table.get_asset(store, id)
+  @spec get_asset(store(), binary, atom) :: nil | Asset.t()
+  def get_asset(store, id, locale \\ nil) when not is_atom(store) and is_binary(id),
+    do: Store.Table.get_asset(store, id, locale)
 
   @doc """
   Resolves `link` in the CFSync store `store` and returns the corresponding asset or entry.
 
   Returns `nil` if link target is not not found.
   """
-  @spec get_link_target(store(), Link.t()) :: nil | Entry.t() | Asset.t()
-  def get_link_target(store, %Link{} = link) when not is_atom(store),
-    do: Store.Table.get_link_target(store, link)
+  @spec get_link_target(Link.t()) :: nil | Entry.t() | Asset.t()
+  def get_link_target(%Link{} = link),
+    do: Store.Table.get_link_target(link)
 
   @doc """
   Resolves a `link` (child entry or asset) from an entry field and returns the corresponding asset or entry.
@@ -239,8 +235,9 @@ defmodule CFSync do
   """
   @spec get_child(Entry.t(), atom()) :: nil | Entry.t() | Asset.t()
   def get_child(%Entry{} = entry, field_name) when is_atom(field_name) do
-    link = Map.fetch!(entry.fields, field_name)
-    get_link_target(entry.store, link)
+    entry.fields
+    |> Map.fetch!(field_name)
+    |> get_link_target()
   end
 
   @doc """
@@ -253,7 +250,7 @@ defmodule CFSync do
   def get_children(%Entry{} = entry, field_name) when is_atom(field_name) do
     entry.fields
     |> Map.fetch!(field_name)
-    |> Enum.map(&get_link_target(entry.store, &1))
+    |> Enum.map(&get_link_target/1)
   end
 
   @doc """
