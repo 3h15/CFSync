@@ -19,15 +19,15 @@ defmodule CFSync.EntryTest do
     end
   end
 
-  test "new/2 Creates a new entry with correct fields struct" do
-    store = make_ref()
-
+  test "new/5 Creates a new entry with correct fields struct" do
     content_types = %{
       "content_type_id" => %{
         content_type: :content_type_key,
         fields_module: Page
       }
     }
+
+    store = make_ref()
 
     data = %{
       "sys" => %{
@@ -54,14 +54,15 @@ defmodule CFSync.EntryTest do
              revision: 12,
              space_id: "GHIJKL",
              content_type: :content_type_key,
+             locale: :en,
              fields: %Page{data_arg: data_arg}
-           } = Entry.new(data, content_types, {:en, "en_US"}, store)
+           } = Entry.new(data, content_types, %{en: "en_US"}, store, :en)
 
     # Assert extractors are called with the correct data
     assert data_arg == %{
              store: store,
              fields: %{"name" => %{"en_US" => "A name"}},
-             cf_locale: "en_US",
+             locales: %{en: "en_US"},
              locale: :en
            }
   end
@@ -94,7 +95,7 @@ defmodule CFSync.EntryTest do
       with_log(
         [level: :error],
         fn ->
-          Entry.new(data, content_types, {:en, "en_US"}, store)
+          Entry.new(data, content_types, %{en: "en_US"}, store, :en)
         end
       )
 
@@ -140,7 +141,7 @@ defmodule CFSync.EntryTest do
       with_log(
         [level: :error],
         fn ->
-          Entry.new(data, content_types, {:en, "en_US"}, store)
+          Entry.new(data, content_types, %{en: "en_US"}, store, :en)
         end
       )
 
@@ -186,7 +187,7 @@ defmodule CFSync.EntryTest do
       with_log(
         [level: :error],
         fn ->
-          Entry.new(data, content_types, {:en, "en_US"}, store)
+          Entry.new(data, content_types, %{en: "en_US"}, store, :en)
         end
       )
 

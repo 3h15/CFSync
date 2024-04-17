@@ -45,8 +45,9 @@ defmodule CFSync.Entry do
   @spec new(
           data :: map(),
           content_types :: map(),
-          {locale :: atom(), cf_locale :: binary()},
-          store :: CFSync.store()
+          locales :: map(),
+          store :: CFSync.store(),
+          locale :: atom()
         ) :: t()
   def new(
         %{
@@ -68,8 +69,9 @@ defmodule CFSync.Entry do
           "fields" => fields
         },
         content_types,
-        {locale, cf_locale},
-        store
+        locales,
+        store,
+        locale
       ) do
     case get_config_for_content_type(content_types, content_type) do
       {:ok,
@@ -83,14 +85,14 @@ defmodule CFSync.Entry do
           revision: revision,
           space_id: space_id,
           content_type: content_type,
+          locale: locale,
           fields:
             fields_module.new(%{
               fields: fields,
-              cf_locale: cf_locale,
+              locales: locales,
               store: store,
               locale: locale
-            }),
-          locale: locale
+            })
         }
 
       :error ->
@@ -100,8 +102,8 @@ defmodule CFSync.Entry do
           revision: revision,
           space_id: space_id,
           content_type: :unknown,
-          fields: nil,
-          locale: locale
+          locale: locale,
+          fields: nil
         }
     end
   end
