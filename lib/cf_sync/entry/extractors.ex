@@ -4,18 +4,19 @@ defmodule CFSync.Entry.Extractors do
   """
   require Logger
 
+  alias CFSync.Entry.Document
   alias CFSync.Link
   alias CFSync.RichText
 
   @typedoc """
   Entry's payload as provided to `c:CFSync.Entry.Fields.new/1`
   """
-  @opaque data() :: %{
-            fields: map(),
-            locales: %{atom() => String.t()},
-            store: CFSync.store(),
-            locale: atom()
-          }
+  @type data() :: %{
+          fields: map(),
+          locales: %{atom() => String.t()},
+          store: CFSync.store(),
+          locale: atom()
+        }
 
   @doc """
   Returns value of `field_name` as a `binary`.
@@ -29,7 +30,7 @@ defmodule CFSync.Entry.Extractors do
   def extract_binary(data, field_name, opts \\ []) do
     default = Keyword.get(opts, :default, nil)
 
-    case extract(data, field_name, opts) do
+    case Document.get_value(data, field_name, opts) do
       v when is_binary(v) -> v
       _ -> default
     end
@@ -47,7 +48,7 @@ defmodule CFSync.Entry.Extractors do
   def extract_boolean(data, field_name, opts \\ []) do
     default = Keyword.get(opts, :default, nil)
 
-    case extract(data, field_name, opts) do
+    case Document.get_value(data, field_name, opts) do
       v when is_boolean(v) -> v
       _ -> default
     end
@@ -69,7 +70,7 @@ defmodule CFSync.Entry.Extractors do
   def extract_number(data, field_name, opts \\ []) do
     default = Keyword.get(opts, :default, nil)
 
-    case extract(data, field_name, opts) do
+    case Document.get_value(data, field_name, opts) do
       v when is_number(v) -> v
       _ -> default
     end
@@ -87,7 +88,7 @@ defmodule CFSync.Entry.Extractors do
   def extract_date(data, field_name, opts \\ []) do
     default = Keyword.get(opts, :default, nil)
 
-    with v when is_binary(v) <- extract(data, field_name, opts),
+    with v when is_binary(v) <- Document.get_value(data, field_name, opts),
          {:ok, date} <- Date.from_iso8601(v) do
       date
     else
@@ -108,7 +109,7 @@ defmodule CFSync.Entry.Extractors do
   def extract_datetime(data, field_name, opts \\ []) do
     default = Keyword.get(opts, :default, nil)
 
-    with v when is_binary(v) <- extract(data, field_name, opts),
+    with v when is_binary(v) <- Document.get_value(data, field_name, opts),
          {:ok, date, _offset} <- DateTime.from_iso8601(v) do
       date
     else
@@ -129,7 +130,7 @@ defmodule CFSync.Entry.Extractors do
   def extract_map(data, field_name, opts \\ []) do
     default = Keyword.get(opts, :default, nil)
 
-    case extract(data, field_name, opts) do
+    case Document.get_value(data, field_name, opts) do
       v when is_map(v) -> v
       _ -> default
     end
@@ -147,7 +148,7 @@ defmodule CFSync.Entry.Extractors do
   def extract_list(data, field_name, opts \\ []) do
     default = Keyword.get(opts, :default, nil)
 
-    case extract(data, field_name, opts) do
+    case Document.get_value(data, field_name, opts) do
       v when is_list(v) -> v
       _ -> default
     end
@@ -165,7 +166,7 @@ defmodule CFSync.Entry.Extractors do
   def extract_link(data, field_name, opts \\ []) do
     default = Keyword.get(opts, :default, nil)
 
-    with link_data when is_map(link_data) <- extract(data, field_name, opts),
+    with link_data when is_map(link_data) <- Document.get_value(data, field_name, opts),
          %Link{} = link <- try_link(link_data, data.store, data.locale) do
       link
     else
@@ -185,7 +186,7 @@ defmodule CFSync.Entry.Extractors do
   def extract_links(data, field_name, opts \\ []) do
     default = Keyword.get(opts, :default, nil)
 
-    case extract(data, field_name, opts) do
+    case Document.get_value(data, field_name, opts) do
       links when is_list(links) ->
         links
         |> Enum.map(&try_link(&1, data.store, data.locale))
@@ -208,7 +209,7 @@ defmodule CFSync.Entry.Extractors do
   def extract_rich_text(data, field_name, opts \\ []) do
     default = Keyword.get(opts, :default, nil)
 
-    case extract(data, field_name, opts) do
+    case Document.get_value(data, field_name, opts) do
       rt when is_map(rt) -> RichText.new(rt, data.store, data.locale)
       _ -> default
     end
@@ -226,7 +227,7 @@ defmodule CFSync.Entry.Extractors do
   @spec extract_atom(data(), String.t(), %{any() => atom()}, keyword()) :: nil | atom
   def extract_atom(data, field_name, mapping, opts \\ []) do
     default = Keyword.get(opts, :default, nil)
-    v = extract(data, field_name, opts)
+    v = Document.get_value(data, field_name, opts)
 
     case mapping[v] do
       nil -> default
@@ -245,18 +246,8 @@ defmodule CFSync.Entry.Extractors do
   """
   @spec extract_custom(data(), String.t(), (any() -> any()), keyword) :: any()
   def extract_custom(data, field_name, fun, opts \\ []) do
-    v = extract(data, field_name, opts)
+    v = Document.get_value(data, field_name, opts)
     fun.(v)
-  end
-
-  defp extract(%{fields: fields, locales: locales, locale: locale} = _data, field, _opts) do
-    cf_locale = Map.get(locales, locale)
-
-    if !cf_locale or cf_locale == "" do
-      raise "No locale mapping for #{inspect(locale)}"
-    end
-
-    fields[field][cf_locale]
   end
 
   defp try_link(link_data, store, locale) do
