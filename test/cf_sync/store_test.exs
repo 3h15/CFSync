@@ -193,7 +193,7 @@ defmodule CFSync.StoreTest do
         }
     end
 
-    pid = start_store(auto_tick: false, locales: [en: "en_US", fr: "fr_FR"])
+    pid = start_store(auto_tick: false, locales: %{en: "en_US", fr: "fr_FR"})
     allow(FakeHTTPClient, self(), pid)
 
     sync_with = fn items ->
