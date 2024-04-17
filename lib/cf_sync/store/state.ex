@@ -2,7 +2,6 @@ defmodule CFSync.Store.State do
   @moduledoc false
 
   @default_root_url "https://cdn.contentful.com/"
-  @default_locale nil
   @default_locales %{nil => "en-US"}
   @default_initial_sync_interval 30
   @default_delta_sync_interval 5000
