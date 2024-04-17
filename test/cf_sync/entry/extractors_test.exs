@@ -174,7 +174,6 @@ defmodule CFSync.Entry.ExtractorsTest do
 
     build = fn value_fun ->
       field_name = "test_field"
-      cf_locale = "fr_FR"
       locale = :fr
       store = make_ref()
 
@@ -185,8 +184,8 @@ defmodule CFSync.Entry.ExtractorsTest do
         end
 
       data = %{
-        fields: %{field_name => %{cf_locale => value}},
-        cf_locale: cf_locale,
+        fields: %{field_name => %{"fr_FR" => value}},
+        locales: %{fr: "fr_FR"},
         store: store,
         locale: locale
       }

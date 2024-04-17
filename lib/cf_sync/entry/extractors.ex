@@ -12,7 +12,7 @@ defmodule CFSync.Entry.Extractors do
   """
   @opaque data() :: %{
             fields: map(),
-            cf_locale: String.t(),
+            locales: %{atom() => String.t()},
             store: CFSync.store(),
             locale: atom()
           }
@@ -249,14 +249,13 @@ defmodule CFSync.Entry.Extractors do
     fun.(v)
   end
 
-  defp extract(
-         %{
-           fields: fields,
-           cf_locale: cf_locale
-         } = _data,
-         field,
-         _opts
-       ) do
+  defp extract(%{fields: fields, locales: locales, locale: locale} = _data, field, _opts) do
+    cf_locale = Map.get(locales, locale)
+
+    if !cf_locale or cf_locale == "" do
+      raise "No locale mapping for #{inspect(locale)}"
+    end
+
     fields[field][cf_locale]
   end
 
