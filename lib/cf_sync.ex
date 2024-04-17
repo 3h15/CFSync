@@ -110,7 +110,7 @@ defmodule CFSync do
   @typedoc """
   Reference to a CFSync store.
   """
-  @opaque store() :: :ets.tid()
+  @type store() :: :ets.tid()
 
   @doc """
   Starts CFSync GenServer

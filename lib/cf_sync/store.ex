@@ -169,11 +169,11 @@ defmodule CFSync.Store do
       case delta do
         {:upsert_asset, item} ->
           asset = Asset.new(item, locales, store, locale)
-          Table.put(state.table_reference, asset)
+          Table.put(store, asset)
 
         {:upsert_entry, item} ->
           entry = Entry.new(item, content_types, locales, store, locale)
-          Table.put(state.table_reference, entry)
+          Table.put(store, entry)
 
         {:delete_asset, asset_id} ->
           Table.delete_asset(store, asset_id, locale)
