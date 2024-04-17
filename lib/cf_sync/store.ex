@@ -158,7 +158,7 @@ defmodule CFSync.Store do
   end
 
   defp update_table(
-         %{
+         %State{
            table_reference: store,
            content_types: content_types,
            locales: locales
@@ -169,11 +169,11 @@ defmodule CFSync.Store do
       case delta do
         {:upsert_asset, item} ->
           asset = Asset.new(item, locales, store, locale)
-          Table.put(store, asset)
+          Table.put(state.table_reference, asset)
 
         {:upsert_entry, item} ->
           entry = Entry.new(item, content_types, locales, store, locale)
-          Table.put(store, entry)
+          Table.put(state.table_reference, entry)
 
         {:delete_asset, asset_id} ->
           Table.delete_asset(store, asset_id, locale)
