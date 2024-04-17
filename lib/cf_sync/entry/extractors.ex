@@ -24,7 +24,12 @@ defmodule CFSync.Entry.Extractors do
   - `data` is the entry's payload as provided to `c:CFSync.Entry.Fields.new/1`
   - `field_name` is the field's id in Contentful (ie. What is configured in Contentful app)
 
-  Returns `default` on failure (field empty, not a string...)
+  Returns nil or `default` on failure (field empty, not a string...)
+
+  ## Options
+  - default: default value to return if the field is empty or not a binary
+  - force_locale: a locale to use instead of the entry's locale
+  - fallback_locale: locale to fallback to if the field is empty
   """
   @spec extract_binary(data(), String.t(), keyword()) :: nil | String.t()
   def extract_binary(data, field_name, opts \\ []) do
@@ -42,7 +47,12 @@ defmodule CFSync.Entry.Extractors do
   - `data` is the entry's payload as provided to `c:CFSync.Entry.Fields.new/1`
   - `field_name` is the field's id in Contentful (ie. What is configured in Contentful app)
 
-  Returns `default` on failure (field empty, not a boolean...)
+  Returns nil or `default` on failure (field empty, not a boolean...)
+
+  ## Options
+  - default: default value to return if the field is empty or not a boolean
+  - force_locale: a locale to use instead of the entry's locale
+  - fallback_locale: locale to fallback to if the field is empty
   """
   @spec extract_boolean(data(), String.t(), keyword()) :: nil | boolean
   def extract_boolean(data, field_name, opts \\ []) do
@@ -64,7 +74,12 @@ defmodule CFSync.Entry.Extractors do
   of it's value. A contentful decimal value of 1.0 will be stored as 1 in the JSON
   and read as an integer by JASON.
 
-  Returns `default` on failure (field empty, not a number...)
+  Returns nil or `default` on failure (field empty, not a number...)
+
+  ## Options
+  - default: default value to return if the field is empty or not a number
+  - force_locale: a locale to use instead of the entry's locale
+  - fallback_locale: locale to fallback to if the field is empty
   """
   @spec extract_number(data(), String.t(), keyword()) :: nil | number
   def extract_number(data, field_name, opts \\ []) do
@@ -82,7 +97,12 @@ defmodule CFSync.Entry.Extractors do
   - `data` is the entry's payload as provided to `c:CFSync.Entry.Fields.new/1`
   - `field_name` is the field's id in Contentful (ie. What is configured in Contentful app)
 
-  Returns `default` on failure (field empty, invalid format, invalid date...)
+  Returns nil or `default` on failure (field empty, invalid format, invalid date...)
+
+  ## Options
+  - default: default value to return if the field is empty or not a date
+  - force_locale: a locale to use instead of the entry's locale
+  - fallback_locale: locale to fallback to if the field is empty
   """
   @spec extract_date(data(), String.t(), keyword()) :: nil | Date.t()
   def extract_date(data, field_name, opts \\ []) do
@@ -103,7 +123,12 @@ defmodule CFSync.Entry.Extractors do
   - `data` is the entry's payload as provided to `c:CFSync.Entry.Fields.new/1`
   - `field_name` is the field's id in Contentful (ie. What is configured in Contentful app)
 
-  Returns `default` on failure (field empty, invalid format, invalid datetime...)
+  Returns nil or `default` on failure (field empty, invalid format, invalid datetime...)
+
+  ## Options
+  - default: default value to return if the field is empty or not a datetime
+  - force_locale: a locale to use instead of the entry's locale
+  - fallback_locale: locale to fallback to if the field is empty
   """
   @spec extract_datetime(data(), String.t(), keyword()) :: nil | DateTime.t()
   def extract_datetime(data, field_name, opts \\ []) do
@@ -124,7 +149,12 @@ defmodule CFSync.Entry.Extractors do
   - `data` is the entry's payload as provided to `c:CFSync.Entry.Fields.new/1`
   - `field_name` is the field's id in Contentful (ie. What is configured in Contentful app)
 
-  Returns `default` on failure (field empty, not a map...)
+  Returns nil or `default` on failure (field empty, not a map...)
+
+  ## Options
+  - default: default value to return if the field is empty or not a map
+  - force_locale: a locale to use instead of the entry's locale
+  - fallback_locale: locale to fallback to if the field is empty
   """
   @spec extract_map(data(), String.t(), keyword()) :: nil | map
   def extract_map(data, field_name, opts \\ []) do
@@ -142,7 +172,12 @@ defmodule CFSync.Entry.Extractors do
   - `data` is the entry's payload as provided to `c:CFSync.Entry.Fields.new/1`
   - `field_name` is the field's id in Contentful (ie. What is configured in Contentful app)
 
-  Returns `default` on failure (field empty, not a list...)
+  Returns nil or `default` on failure (field empty, not a list...)
+
+  ## Options
+  - default: default value to return if the field is empty or not a list
+  - force_locale: a locale to use instead of the entry's locale
+  - fallback_locale: locale to fallback to if the field is empty
   """
   @spec extract_list(data(), String.t(), keyword()) :: nil | list
   def extract_list(data, field_name, opts \\ []) do
@@ -160,7 +195,12 @@ defmodule CFSync.Entry.Extractors do
   - `data` is the entry's payload as provided to `c:CFSync.Entry.Fields.new/1`
   - `field_name` is the field's id in Contentful (ie. What is configured in Contentful app)
 
-  Returns `default` on failure (field empty, not a link...)
+  Returns nil or `default` on failure (field empty, not a link...)
+
+  ## Options
+  - default: default value to return if the field is empty or not a link
+  - force_locale: a locale to use instead of the entry's locale
+  - fallback_locale: locale to fallback to if the field is empty
   """
   @spec extract_link(data(), String.t(), keyword()) :: nil | Link.t()
   def extract_link(data, field_name, opts \\ []) do
@@ -180,7 +220,12 @@ defmodule CFSync.Entry.Extractors do
   - `data` is the entry's payload as provided to `c:CFSync.Entry.Fields.new/1`
   - `field_name` is the field's id in Contentful (ie. What is configured in Contentful app)
 
-  Returns `default` on failure (field empty, not a list...)
+  Returns nil or `default` on failure (field empty, not a list...)
+
+  ## Options
+  - default: default value to return if the field is empty or not a list
+  - force_locale: a locale to use instead of the entry's locale
+  - fallback_locale: locale to fallback to if the field is empty
   """
   @spec extract_links(data(), String.t(), keyword()) :: nil | list(Link.t())
   def extract_links(data, field_name, opts \\ []) do
@@ -203,7 +248,12 @@ defmodule CFSync.Entry.Extractors do
   - `data` is the entry's payload as provided to `c:CFSync.Entry.Fields.new/1`
   - `field_name` is the field's id in Contentful (ie. What is configured in Contentful app)
 
-  Returns `default` on failure (field empty, not a richtext...)
+  Returns nil or `default` on failure (field empty, not a richtext...)
+
+  ## Options
+  - default: default value to return if the field is empty or not a richtext
+  - force_locale: a locale to use instead of the entry's locale
+  - fallback_locale: locale to fallback to if the field is empty
   """
   @spec extract_rich_text(data(), String.t(), keyword()) :: nil | RichText.t()
   def extract_rich_text(data, field_name, opts \\ []) do
@@ -222,7 +272,12 @@ defmodule CFSync.Entry.Extractors do
   - `field_name` is the field's id in Contentful (ie. What is configured in Contentful app)
   - `mapping` is a map of `"value" => :atom` used to find which atom correspond to the field's value
 
-  Returns `default` on failure (field empty, no mapping...)
+  Returns nil or `default` on failure (field empty, no mapping...)
+
+  ## Options
+  - default: default value to return if the field is empty or not in the mapping
+  - force_locale: a locale to use instead of the entry's locale
+  - fallback_locale: locale to fallback to if the field is empty
   """
   @spec extract_atom(data(), String.t(), %{any() => atom()}, keyword()) :: nil | atom
   def extract_atom(data, field_name, mapping, opts \\ []) do
@@ -243,6 +298,10 @@ defmodule CFSync.Entry.Extractors do
   - `fun` is a function of arity 1
 
   Returns `nil` if the field is not included in the payload.
+
+  ## Options
+  - force_locale: a locale to use instead of the entry's locale
+  - fallback_locale: locale to fallback to if the field is empty
   """
   @spec extract_custom(data(), String.t(), (any() -> any()), keyword) :: any()
   def extract_custom(data, field_name, fun, opts \\ []) do

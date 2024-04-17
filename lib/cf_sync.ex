@@ -8,9 +8,10 @@ defmodule CFSync do
   - Provides functions to extract field values from Contentful entries JSON payloads.
   - Maps Contenful entries, assets, and links to Elixir structs. Using structs is better for readability,
   performance and reliability.
+  - Works with a single or multiple locales.
   - Maps RichText data to Elixir structs.
   - Keeps a cache of your entries and assets in a ETS table.
-  This allows for fast (way faster than rest API calls) and concurrent reads.
+  This allows for fast (way faster than REST API calls) and concurrent reads.
   - Keeps this cache up to date by regularly fetching changes from Contentful sync API
 
   ## Installation
@@ -18,7 +19,7 @@ defmodule CFSync do
   ```
   def deps do
   [
-    {:cf_sync, "~> 0.1.0"},
+    {:cf_sync, "~> 0.15.0"},
   ]
   end
   ```
@@ -43,7 +44,7 @@ defmodule CFSync do
   end
 
   # Define a mapping to map Contentful "contentType" ids to an atom name and a fields struct:
-  entries_mapping = %{
+  content_types = %{
     # "page" key is the content_type ID as configured in Contentful
     "page" => %{
       content_type: :page,
@@ -56,13 +57,20 @@ defmodule CFSync do
     # ...
   }
 
+  # Define your locales (optional):
+  locales = %{en: "en-US", fr: "fr-FR"}
+
+  # If you have a single locale, but it is not "en-US", you can use:
+  # locales = %{nil: "fr-FR"}
+
   # Start a CFSync process
   {:ok, pid} =
     CFSync.start_link(
-      MyApp.MyCFSync,
-      "Your_contentful_space_id",
-      "Your_contentful_delivery_api_token",
-      entries_mapping
+      name: MyApp.MyCFSync,
+      space_id: "Your_contentful_space_id",
+      delivery_token: "Your_contentful_delivery_api_token",
+      content_types: content_types,
+      locales: locales
     )
 
 
@@ -70,6 +78,10 @@ defmodule CFSync do
   # Use it
   store = CFSync.from(MyApp.MyCFSync)
   entry =  CFSync.get_entry(store, "entry_id")
+
+  # OR, with multiple locales:
+  # entry_fr =  CFSync.get_entry(store, "entry_id", :fr)
+  # entry_en =  CFSync.get_entry(store, "entry_id", :en)
 
   # entry ->
     %CFSync.Entry{
@@ -86,7 +98,9 @@ defmodule CFSync do
       }
     }
 
-  author = CFSync.get_link_target(store, entry.fields.author)
+  author = CFSync.get_link_target(entry.fields.author)
+  # Or
+  # author = CFSync.get_child(entry, :author)
 
   # author ->
     %CFSync.Entry{
@@ -116,21 +130,22 @@ defmodule CFSync do
   Starts CFSync GenServer
 
   Should be started in a supervision tree
-  - `name` is an atom to reference this CFSync process. Use the same `name`
-  in `from/1` to query entries.
-  - `space_id` is your Contentful space's ID
-  - `delivery_token` is your Contentful API token
-  - `content_types` is a map describing how to map Contentful entries to elixir structs. See module doc.
 
   ## Options
-  - `:locale` - The locale you want to fetch from Contentful. Defaults to `"en-US"`
-  - `:root_url` - Default is `"https://cdn.contentful.com/"`
-  - `:initial_sync_interval` - The server will wait for this interval between two page
+
+  - `name` (required) is an atom to reference this CFSync process. Use the same `name`
+  in `from/1` to query entries.
+  - `space_id` (required) is your Contentful space's ID
+  - `delivery_token` (required) is your Contentful API token
+  - `content_types` (required) is a map describing how to map Contentful entries to elixir structs. See module doc.
+  - `locales` (optional) is a map of locales. The key is the locale name in Elixir (an atom), the value is the locale name in Contentful.
+  - `:root_url` (optional) - Default is `"https://cdn.contentful.com/"`
+  - `:initial_sync_interval` (optional) - The server will wait for this interval between two page
   requests during initial sync. Defaults to 30 milliseconds.
-  - `:delta_sync_interval` - The server will wait for this interval between two sync
+  - `:delta_sync_interval` (optional) - The server will wait for this interval between two sync
   requests. Defaults to 5000 milliseconds. You can use a shorter delay to get updates
   faster, but you will be rate limited by Contentful if you set it too short.
-  - `:invalidation_callbacks` - List of 0-arity anonymous functions that will
+  - `:invalidation_callbacks` (optional) - List of 0-arity anonymous functions that will
   be called after each sync operation that actually adds, updates or deletes some entries.
 
   """
@@ -172,7 +187,14 @@ defmodule CFSync do
   def from(name), do: Store.Table.get_table_reference_for_name(name)
 
   @doc """
-  Returns a list containg all entries from the CFSync store `store`.
+  Returns a list containg all entries for a given `locale` from the CFSync store `store`.
+
+  The `locale` is optional and defaults to `nil`. By default, CFSync is configured to
+  work with a single locale (the `nil` locale), which is `en-US`. You can change the default
+  locale by passing `locales: %{nil: "fr-FR"}` to `start_link/1`.
+
+  If you have multiple locales, you must pass the locale to this function to get entries
+  for that locale.
 
   This function will retrieve ALL entries currently stored in the store's ETS table
   and deep copy them to the current process. Using this on a large Contentful space
@@ -185,9 +207,10 @@ defmodule CFSync do
     do: Store.Table.get_entries(store, locale)
 
   @doc """
-  Returns a list containg all entries of specified `content_type` from the CFSync store `store`.
+  Returns a list containg all entries of specified `content_type` for a given
+  `locale` from the CFSync store `store`.
 
-  See `get_entries/1` about performance.
+  See `get_entries/1` about performance and locale.
   """
   @spec get_entries_for_content_type(store(), atom, atom) :: [Entry.t()]
   def get_entries_for_content_type(store, content_type, locale \\ nil)
@@ -195,7 +218,11 @@ defmodule CFSync do
       do: Store.Table.get_entries_for_content_type(store, content_type, locale)
 
   @doc """
-  Get the entry specified by `id` from the CFSync store `store`.
+  Get the entry specified by `id` for the given locale from the CFSync store `store`.
+
+  Returns `nil` if the entry is not found.
+
+  See `get_entries/1` about locale.
   """
   @spec get_entry(store(), binary, atom) :: nil | Entry.t()
   def get_entry(store, id, locale \\ nil) when not is_atom(store) and is_binary(id),
@@ -204,16 +231,18 @@ defmodule CFSync do
   @doc """
   Returns a list containg all assets from the CFSync store `store`.
 
-  See `get_entries/1` about performance.
+  See `get_entries/1` about performance and locale.
   """
   @spec get_assets(store(), atom) :: [Asset.t()]
   def get_assets(store, locale \\ nil) when not is_atom(store),
     do: Store.Table.get_assets(store, locale)
 
   @doc """
-  Get the asset specified by `id` from the CFSync store `store`.
+  Get the asset specified by `id` for the given locale from the CFSync store `store`.
 
   Returns `nil` if the asset is not found.
+
+  See `get_entries/1` about locale.
   """
   @spec get_asset(store(), binary, atom) :: nil | Asset.t()
   def get_asset(store, id, locale \\ nil) when not is_atom(store) and is_binary(id),
@@ -244,13 +273,14 @@ defmodule CFSync do
   Resolves a list of `link` (children entries or assets) from an entry field and returns the corresponding assets or entries.
 
   Returns the list of links mapped to the corresponding assets or entries.
-  If an entry or asset is not found, it will be mapped to `nil`.
+  If an entry or asset is not found, it is not included in the result.
   """
   @spec get_children(Entry.t(), atom()) :: [nil | Entry.t() | Asset.t()]
   def get_children(%Entry{} = entry, field_name) when is_atom(field_name) do
     entry.fields
     |> Map.fetch!(field_name)
     |> Enum.map(&get_link_target/1)
+    |> Enum.filter(&is_map/1)
   end
 
   @doc """

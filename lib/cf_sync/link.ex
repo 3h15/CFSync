@@ -8,7 +8,7 @@ defmodule CFSync.Link do
   relation field will contain a `Link` struct (or `nil`). Multi-entry and multi-asset relation
   fields contain a list of `Link` structs (or `[]`).
 
-  Links can be resolved through `CFSync.get_link_target/2`.
+  Links can be resolved through `CFSync.get_link_target/1`.
   """
   @enforce_keys [:store, :type, :id, :locale]
 
