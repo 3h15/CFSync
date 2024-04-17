@@ -46,7 +46,7 @@ defmodule CFSyncTest.Fields.Page do
   @impl true
   def new(data) do
     %__MODULE__{
-      name: extract_binary(data, "name", "No name"),
+      name: extract_binary(data, "name", default: "No name"),
       boolean: extract_boolean(data, "boolean"),
       integer: extract_number(data, "integer"),
       decimal: extract_number(data, "decimal"),

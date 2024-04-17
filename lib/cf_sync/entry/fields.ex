@@ -32,8 +32,8 @@ defmodule CFSync.Entry.Fields do
 
     def new(data) do
       %__MODULE__{
-        # field_name: extract_*(data, "fieldNameInContentful", default_value \\\\ nil)
-        name: extract_binary(data, "name", "Default name"),
+        # field_name: extract_*(data, "fieldNameInContentful", default: default_value)
+        name: extract_binary(data, "name", default: "Default name"),
         body: extract_richtext(data, "body"),
         author: extract_link(data, "author"),
       }
@@ -41,5 +41,5 @@ defmodule CFSync.Entry.Fields do
   end
   ```
   """
-  @callback new({map, binary}) :: __MODULE__.t()
+  @callback new(CFSync.Entry.Extractors.data()) :: __MODULE__.t()
 end

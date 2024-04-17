@@ -14,7 +14,7 @@ defmodule CFSyncTest.Fields.Star do
   @impl true
   def new(data) do
     %__MODULE__{
-      name: extract_binary(data, "name", "No name")
+      name: extract_binary(data, "name", default: "No name")
     }
   end
 end

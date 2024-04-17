@@ -239,7 +239,7 @@ defmodule CFSync.Entry.ExtractorsTest do
     for {fun, _valid_value, invalid_value} <- extractors do
       {name, expected_value, data} = build.(invalid_value)
       default_value = expected_value
-      assert apply(Extractors, fun, [data, name, default_value]) == expected_value
+      assert apply(Extractors, fun, [data, name, [default: default_value]]) == expected_value
     end
   end
 
@@ -252,7 +252,7 @@ defmodule CFSync.Entry.ExtractorsTest do
       default_value = expected_value
       invalid_name = "err_" <> name
 
-      assert apply(Extractors, fun, [data, invalid_name, default_value]) ==
+      assert apply(Extractors, fun, [data, invalid_name, [default: default_value]]) ==
                expected_value
     end
   end
@@ -314,7 +314,7 @@ defmodule CFSync.Entry.ExtractorsTest do
 
       {name, _expected_value, data} = build.(fn _store, _locale -> unmapped_value end)
 
-      assert Extractors.extract_atom(data, name, mapping, default_value) ==
+      assert Extractors.extract_atom(data, name, mapping, default: default_value) ==
                default_value
     end
 
@@ -331,7 +331,7 @@ defmodule CFSync.Entry.ExtractorsTest do
 
       invalid_name = "err_" <> name
 
-      assert Extractors.extract_atom(data, invalid_name, mapping, default_value) ==
+      assert Extractors.extract_atom(data, invalid_name, mapping, default: default_value) ==
                default_value
     end
   end
