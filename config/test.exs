@@ -1,4 +1,4 @@
-import Mix.Config
+import Config
 
 config :cf_sync, :httpoison_module, CFSyncTest.FakeHTTPoison
 
