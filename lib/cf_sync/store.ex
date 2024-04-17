@@ -37,7 +37,6 @@ defmodule CFSync.Store do
           :use_dump_file,
           :root_url,
           :locales,
-          :main_locale,
           :initial_sync_interval,
           :delta_sync_interval,
           :auto_tick,
@@ -162,7 +161,6 @@ defmodule CFSync.Store do
          %{
            table_reference: store,
            content_types: content_types,
-           #  main_locale: main_locale,
            locales: locales
          } = state,
          %SyncPayload{deltas: deltas}
