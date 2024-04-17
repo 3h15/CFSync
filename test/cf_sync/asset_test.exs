@@ -51,6 +51,6 @@ defmodule CFSync.AssetTest do
              width: 123,
              height: 456,
              size: 789
-           } = Asset.new(data, {:en, "en_US"}, store)
+           } = Asset.new(data, %{en: "en_US"}, store, :en)
   end
 end

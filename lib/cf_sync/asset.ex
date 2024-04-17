@@ -55,8 +55,9 @@ defmodule CFSync.Asset do
   # cf_locale is the Contentful locale: it is a binary, used as a key in the Contentful API.
   @spec new(
           data :: map(),
-          {locale :: atom(), cf_locale :: binary()},
-          store :: CFSync.store()
+          locales :: map(),
+          store :: CFSync.store(),
+          locale :: atom()
         ) :: t()
   def new(
         %{
@@ -71,9 +72,16 @@ defmodule CFSync.Asset do
           },
           "fields" => fields
         },
-        {locale, cf_locale},
-        store
+        locales,
+        store,
+        locale
       ) do
+    cf_locale = Map.get(locales, locale)
+
+    if !cf_locale or cf_locale == "" do
+      raise "No locale mapping for #{inspect(locale)}"
+    end
+
     title = fields["title"][cf_locale] || ""
     description = fields["description"][cf_locale] || ""
     content_type = fields["file"][cf_locale]["contentType"] || ""
