@@ -251,11 +251,13 @@ defmodule CFSync do
   @doc """
   Resolves `link` in the CFSync store `store` and returns the corresponding asset or entry.
 
-  Returns `nil` if link target is not not found.
+  Returns `nil` if link target is not found.
+
+  Returns `nil` if `link` is not a `CFSync.Link` struct.
   """
   @spec get_link_target(Link.t()) :: nil | Entry.t() | Asset.t()
-  def get_link_target(%Link{} = link),
-    do: Store.Table.get_link_target(link)
+  def get_link_target(%Link{} = link), do: Store.Table.get_link_target(link)
+  def get_link_target(_), do: nil
 
   @doc """
   Resolves a `link` (child entry or asset) from an entry field and returns the corresponding asset or entry.
