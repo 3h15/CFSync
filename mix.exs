@@ -46,8 +46,8 @@ defmodule CFSync.MixProject do
       {:inflex, "~> 2.1"},
       {:jason, "~> 1.4"},
       {:mox, "~> 1.0", only: :test},
-      {:phoenix_html, "~> 3.2"},
-      {:phoenix_live_view, ">= 0.18.0"}
+      {:phoenix_html, "~> 4.0"},
+      {:phoenix_live_view, ">= 0.20.0"}
     ]
   end
 

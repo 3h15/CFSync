@@ -8,7 +8,7 @@ defmodule CFSync.RichTextRenderer do
   Adding line breaks here in the markup would propagate blank lines to the pages.
   """
   use Phoenix.Component
-  use Phoenix.HTML
+  import Phoenix.HTML, only: [raw: 1]
 
   def render(assigns) do
     assigns =
