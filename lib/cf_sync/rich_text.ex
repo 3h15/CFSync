@@ -82,6 +82,23 @@ defmodule CFSync.RichText do
     })
   end
 
+  @doc """
+  Maps node recursively using the provided function.
+
+  The provided function should accept a node and return a new node.
+  """
+  @spec map(t(), function()) :: t()
+  def map(%__MODULE__{} = node, mapper) do
+    case mapper.(node) do
+      %__MODULE__{content: []} = node ->
+        node
+
+      %__MODULE__{content: children} = node ->
+        children = Enum.map(children, &map(&1, mapper))
+        %__MODULE__{node | content: children}
+    end
+  end
+
   defp create(data), do: %__MODULE__{type: type(data)}
 
   defp maybe_add_content(node, %{"content" => content}, store, locale) when is_list(content),

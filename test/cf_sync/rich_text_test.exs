@@ -292,4 +292,63 @@ defmodule CFSync.RichTextTest do
              ]
            } = rt
   end
+
+  test "map/2 recursively maps nodes" do
+    rt = %RichText{
+      type: :document,
+      content: [
+        %RichText{
+          type: :paragraph,
+          content: [
+            %RichText{
+              type: :text,
+              value: "Un"
+            },
+            %RichText{
+              type: :text,
+              value: "Deux",
+              marks: [:bold]
+            },
+            %RichText{
+              type: :text,
+              value: "Trois",
+              marks: [:italic, :underline, :code]
+            }
+          ]
+        }
+      ]
+    }
+
+    transformed_rt =
+      RichText.map(rt, fn
+        %{type: :text, value: "Un"} -> %RichText{type: :text, value: "One"}
+        %{marks: [:italic | _]} = node -> %{node | value: "Three, italic!"}
+        node -> node
+      end)
+
+    assert transformed_rt == %RichText{
+             type: :document,
+             content: [
+               %RichText{
+                 type: :paragraph,
+                 content: [
+                   %RichText{
+                     type: :text,
+                     value: "One"
+                   },
+                   %RichText{
+                     type: :text,
+                     value: "Deux",
+                     marks: [:bold]
+                   },
+                   %RichText{
+                     type: :text,
+                     value: "Three, italic!",
+                     marks: [:italic, :underline, :code]
+                   }
+                 ]
+               }
+             ]
+           }
+  end
 end
