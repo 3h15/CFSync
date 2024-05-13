@@ -83,7 +83,7 @@ defmodule CFSync.RichText do
   end
 
   @doc """
-  Maps node recursively using the provided function.
+  Maps nodes recursively using the provided function.
 
   The provided function should accept a node and return a new node.
   """
