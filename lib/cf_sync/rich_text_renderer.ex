@@ -50,6 +50,9 @@ defmodule CFSync.RichTextRenderer do
         :italic -> italic(assigns)
         :underline -> underline(assigns)
         :code -> code(assigns)
+        :superscript -> superscript(assigns)
+        :subscript -> subscript(assigns)
+        :strikethrough -> strikethrough(assigns)
       end
     end
   end
@@ -76,6 +79,18 @@ defmodule CFSync.RichTextRenderer do
 
   defp code(assigns) do
     ~H"<code><%= render_slot @inner_block %></code>"
+  end
+
+  defp superscript(assigns) do
+    ~H"<sup><%= render_slot @inner_block %></sup>"
+  end
+
+  defp subscript(assigns) do
+    ~H"<sub><%= render_slot @inner_block %></sub>"
+  end
+
+  defp strikethrough(assigns) do
+    ~H"<s><%= render_slot @inner_block %></s>"
   end
 
   defp rt_node(%{node: %{type: :text}} = assigns) do
