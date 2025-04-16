@@ -23,6 +23,9 @@ defmodule CFSync.RichText do
           | :italic
           | :underline
           | :code
+          | :superscript
+          | :subscript
+          | :strikethrough
 
   @type node_types ::
           :document
@@ -146,6 +149,9 @@ defmodule CFSync.RichText do
   defp mark(%{"type" => "italic"}), do: :italic
   defp mark(%{"type" => "underline"}), do: :underline
   defp mark(%{"type" => "code"}), do: :code
+  defp mark(%{"type" => "superscript"}), do: :superscript
+  defp mark(%{"type" => "subscript"}), do: :subscript
+  defp mark(%{"type" => "strikethrough"}), do: :strikethrough
 
   defp type(%{"nodeType" => "document"}), do: :document
   defp type(%{"nodeType" => "paragraph"}), do: :paragraph
